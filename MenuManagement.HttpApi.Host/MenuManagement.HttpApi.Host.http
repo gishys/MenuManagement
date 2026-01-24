@@ -1,6 +1,164 @@
-@MenuManagement.HttpApi.Host_HostAddress = http://localhost:5162
+@MenuManagement.HttpApi.Host_HostAddress = http://localhost:5000
+@Token = your_access_token_here
 
-GET {{MenuManagement.HttpApi.Host_HostAddress}}/weatherforecast/
+### 认证相关
+### 获取访问令牌（需要先配置ABP Identity客户端）
+# @name login
+POST {{MenuManagement.HttpApi.Host_HostAddress}}/connect/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=password&username=admin&password=1q2w3E*&client_id=MenuManagement_Swagger&client_secret=1q2w3e*
+
+###
+
+### ============================================
+### 菜单查询 API
+### ============================================
+
+### 1. 获取树形菜单列表
+# @name getMenuTree
+GET {{MenuManagement.HttpApi.Host_HostAddress}}/api/menus/tree
+Authorization: Bearer {{Token}}
 Accept: application/json
+
+###
+
+### 2. 获取菜单列表（分页）
+# @name getMenuList
+GET {{MenuManagement.HttpApi.Host_HostAddress}}/api/menus?skipCount=0&maxResultCount=10&sorting=sort
+Authorization: Bearer {{Token}}
+Accept: application/json
+
+###
+
+### 3. 根据ID获取菜单
+# @name getMenuById
+GET {{MenuManagement.HttpApi.Host_HostAddress}}/api/menus/3fa85f64-5717-4562-b3fc-2c963f66afa6
+Authorization: Bearer {{Token}}
+Accept: application/json
+
+###
+
+### 4. 根据角色ID获取菜单
+# @name getMenusByRoleId
+GET {{MenuManagement.HttpApi.Host_HostAddress}}/api/menus/role/3fa85f64-5717-4562-b3fc-2c963f66afa6
+Authorization: Bearer {{Token}}
+Accept: application/json
+
+###
+
+### 5. 根据用户ID获取菜单
+# @name getMenusByUserId
+GET {{MenuManagement.HttpApi.Host_HostAddress}}/api/menus/user/3fa85f64-5717-4562-b3fc-2c963f66afa6
+Authorization: Bearer {{Token}}
+Accept: application/json
+
+###
+
+### 6. 根据组织ID获取菜单
+# @name getMenusByOrganizationId
+GET {{MenuManagement.HttpApi.Host_HostAddress}}/api/menus/organization/3fa85f64-5717-4562-b3fc-2c963f66afa6
+Authorization: Bearer {{Token}}
+Accept: application/json
+
+###
+
+### ============================================
+### 菜单管理 API
+### ============================================
+
+### 7. 创建菜单
+# @name createMenu
+POST {{MenuManagement.HttpApi.Host_HostAddress}}/api/menus
+Authorization: Bearer {{Token}}
+Content-Type: application/json
+
+{
+  "name": "系统管理",
+  "code": "system",
+  "parentId": null,
+  "type": 1,
+  "path": "/system",
+  "component": "Layout",
+  "icon": "system",
+  "sort": 1,
+  "status": 1,
+  "permission": "system:view",
+  "isHidden": false,
+  "isCache": true,
+  "isExternal": false,
+  "externalUrl": null,
+  "remark": "系统管理模块"
+}
+
+###
+
+### 8. 更新菜单
+# @name updateMenu
+PUT {{MenuManagement.HttpApi.Host_HostAddress}}/api/menus/3fa85f64-5717-4562-b3fc-2c963f66afa6
+Authorization: Bearer {{Token}}
+Content-Type: application/json
+
+{
+  "name": "系统管理（已更新）",
+  "code": "system",
+  "parentId": null,
+  "type": 1,
+  "path": "/system",
+  "component": "Layout",
+  "icon": "system",
+  "sort": 1,
+  "status": 1,
+  "permission": "system:view",
+  "isHidden": false,
+  "isCache": true,
+  "isExternal": false,
+  "externalUrl": null,
+  "remark": "系统管理模块（已更新）"
+}
+
+###
+
+### 9. 删除菜单
+# @name deleteMenu
+DELETE {{MenuManagement.HttpApi.Host_HostAddress}}/api/menus/3fa85f64-5717-4562-b3fc-2c963f66afa6
+Authorization: Bearer {{Token}}
+
+###
+
+### 10. 启用/禁用菜单
+# @name setMenuStatus
+PUT {{MenuManagement.HttpApi.Host_HostAddress}}/api/menus/3fa85f64-5717-4562-b3fc-2c963f66afa6/status?enabled=true
+Authorization: Bearer {{Token}}
+
+###
+
+### ============================================
+### 菜单关联 API
+### ============================================
+
+### 11. 分配菜单给角色
+# @name assignMenusToRole
+POST {{MenuManagement.HttpApi.Host_HostAddress}}/api/menus/role/3fa85f64-5717-4562-b3fc-2c963f66afa6/assign
+Authorization: Bearer {{Token}}
+Content-Type: application/json
+
+[
+  "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "4fa85f64-5717-4562-b3fc-2c963f66afa7"
+]
+
+###
+
+### 12. 分配菜单给组织
+# @name assignMenusToOrganization
+POST {{MenuManagement.HttpApi.Host_HostAddress}}/api/menus/organization/3fa85f64-5717-4562-b3fc-2c963f66afa6/assign
+Authorization: Bearer {{Token}}
+Content-Type: application/json
+
+[
+  "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "4fa85f64-5717-4562-b3fc-2c963f66afa7"
+]
 
 ###
