@@ -1,0 +1,66 @@
+name: Multi-package NuGet Workflow
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.104'
+        
+    - name: Build and pack NuGet packages
+      run: |
+        version=$(echo "${{ github.event.release.tag_name }}" | cut -c 2-)
+        echo "Setting version to $version"
+        
+        # Build and pack in dependency order
+        # 1. MenuManagement.Domain.Shared (no dependencies)
+        dotnet build MenuManagement.Domain.Shared/MenuManagement.Domain.Shared.csproj -c Release
+        dotnet pack MenuManagement.Domain.Shared/MenuManagement.Domain.Shared.csproj -c Release -o ./MenuManagement.Domain.Shared /p:PackageVersion=$version
+        
+        # 2. MenuManagement.Domain (depends on Domain.Shared)
+        dotnet build MenuManagement.Domain/MenuManagement.Domain.csproj -c Release
+        dotnet pack MenuManagement.Domain/MenuManagement.Domain.csproj -c Release -o ./MenuManagement.Domain /p:PackageVersion=$version
+        
+        # 3. MenuManagement.Application.Contracts (depends on Domain.Shared)
+        dotnet build MenuManagement.Application.Contracts/MenuManagement.Application.Contracts.csproj -c Release
+        dotnet pack MenuManagement.Application.Contracts/MenuManagement.Application.Contracts.csproj -c Release -o ./MenuManagement.Application.Contracts /p:PackageVersion=$version
+        
+        # 4. MenuManagement.EntityFrameworkCore (depends on Domain, Domain.Shared)
+        dotnet build MenuManagement.EntityFrameworkCore/MenuManagement.EntityFrameworkCore.csproj -c Release
+        dotnet pack MenuManagement.EntityFrameworkCore/MenuManagement.EntityFrameworkCore.csproj -c Release -o ./MenuManagement.EntityFrameworkCore /p:PackageVersion=$version
+        
+        # 5. MenuManagement.Application (depends on Domain, Application.Contracts, EntityFrameworkCore)
+        dotnet build MenuManagement.Application/MenuManagement.Application.csproj -c Release
+        dotnet pack MenuManagement.Application/MenuManagement.Application.csproj -c Release -o ./MenuManagement.Application /p:PackageVersion=$version
+        
+        # 6. MenuManagement.HttpApi (depends on Application, Application.Contracts)
+        dotnet build MenuManagement.HttpApi/MenuManagement.HttpApi.csproj -c Release
+        dotnet pack MenuManagement.HttpApi/MenuManagement.HttpApi.csproj -c Release -o ./MenuManagement.HttpApi /p:PackageVersion=$version
+        
+        # Copy all packages to workspace root
+        cp ./MenuManagement.Domain.Shared/*.nupkg $GITHUB_WORKSPACE
+        cp ./MenuManagement.Domain/*.nupkg $GITHUB_WORKSPACE
+        cp ./MenuManagement.Application.Contracts/*.nupkg $GITHUB_WORKSPACE
+        cp ./MenuManagement.EntityFrameworkCore/*.nupkg $GITHUB_WORKSPACE
+        cp ./MenuManagement.Application/*.nupkg $GITHUB_WORKSPACE
+        cp ./MenuManagement.HttpApi/*.nupkg $GITHUB_WORKSPACE
+
+    - name: Push NuGet packages
+      run: |
+        # Push in dependency order to ensure dependencies are available first
+        dotnet nuget push ./MenuManagement.Domain.Shared/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }} --skip-duplicate
+        dotnet nuget push ./MenuManagement.Domain/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }} --skip-duplicate
+        dotnet nuget push ./MenuManagement.Application.Contracts/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }} --skip-duplicate
+        dotnet nuget push ./MenuManagement.EntityFrameworkCore/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }} --skip-duplicate
+        dotnet nuget push ./MenuManagement.Application/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }} --skip-duplicate
+        dotnet nuget push ./MenuManagement.HttpApi/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }} --skip-duplicate

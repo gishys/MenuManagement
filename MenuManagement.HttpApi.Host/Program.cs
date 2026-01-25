@@ -8,6 +8,8 @@ public class Program
 {
     public async static Task<int> Main(string[] args)
     {
+        // 配置 Npgsql 以正确处理 DateTime（必须在任何数据库操作之前设置）
+        AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", false);
         Log.Logger = new LoggerConfiguration()
 #if DEBUG
             .MinimumLevel.Debug()

@@ -1,12 +1,9 @@
 using MenuManagement.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Volo.Abp.Data;
 using Volo.Abp.EntityFrameworkCore;
 using Volo.Abp.EntityFrameworkCore.Modeling;
-using Volo.Abp.Identity;
-using Volo.Abp.Identity.EntityFrameworkCore;
-using Volo.Abp.PermissionManagement;
-using Volo.Abp.PermissionManagement.EntityFrameworkCore;
 
 namespace MenuManagement.EntityFrameworkCore;
 
@@ -20,12 +17,40 @@ public class MenuManagementDbContext(DbContextOptions<MenuManagementDbContext> o
     public DbSet<MenuRole> MenuRoles { get; set; }
     public DbSet<MenuOrganization> MenuOrganizations { get; set; }
 
+    // 共享的 DateTime 转换器实例（提高性能，避免重复创建）
+    private static readonly ValueConverter<DateTime, DateTime> DateTimeUtcConverter =
+        new(
+            v => v.Kind == DateTimeKind.Utc ? v : v.ToUniversalTime(),
+            v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
+
+    private static readonly ValueConverter<DateTime?, DateTime?> NullableDateTimeUtcConverter =
+        new(
+            v => v.HasValue ? (v.Value.Kind == DateTimeKind.Utc ? v.Value : v.Value.ToUniversalTime()) : v,
+            v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : v);
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
 
-        builder.ConfigurePermissionManagement();
-        builder.ConfigureIdentity();
+        //builder.ConfigurePermissionManagement();
+        //builder.ConfigureIdentity();
+
+        // 配置所有 DateTime 属性使用 UTC（PostgreSQL timestamp with time zone 要求）
+        // 使用共享的转换器实例以提高性能
+        foreach (var entityType in builder.Model.GetEntityTypes())
+        {
+            foreach (var property in entityType.GetProperties())
+            {
+                if (property.ClrType == typeof(DateTime))
+                {
+                    property.SetValueConverter(DateTimeUtcConverter);
+                }
+                else if (property.ClrType == typeof(DateTime?))
+                {
+                    property.SetValueConverter(NullableDateTimeUtcConverter);
+                }
+            }
+        }
 
         // 配置Menu实体
         builder.Entity<Menu>(b =>
@@ -33,8 +58,8 @@ public class MenuManagementDbContext(DbContextOptions<MenuManagementDbContext> o
             b.ToTable("Menus");
             b.ConfigureByConvention();
 
-            b.Property(x => x.Name).IsRequired().HasMaxLength(50);
-            b.Property(x => x.Code).IsRequired().HasMaxLength(50);
+            b.Property(x => x.Name).IsRequired().HasMaxLength(100);
+            b.Property(x => x.Code).IsRequired().HasMaxLength(100);
             b.Property(x => x.Path).HasMaxLength(200);
             b.Property(x => x.Component).HasMaxLength(200);
             b.Property(x => x.Icon).HasMaxLength(50);
@@ -63,6 +88,9 @@ public class MenuManagementDbContext(DbContextOptions<MenuManagementDbContext> o
                 .HasForeignKey(x => x.MenuId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            // 添加查询过滤器，只返回关联的Menu未被软删除的记录
+            b.HasQueryFilter(x => x.Menu != null && !x.Menu.IsDeleted);
+
             b.HasIndex(x => new { x.MenuId, x.RoleId }).IsUnique();
         });
 
@@ -78,6 +106,9 @@ public class MenuManagementDbContext(DbContextOptions<MenuManagementDbContext> o
                 .WithMany(x => x.MenuOrganizations)
                 .HasForeignKey(x => x.MenuId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // 添加查询过滤器，只返回关联的Menu未被软删除的记录
+            b.HasQueryFilter(x => x.Menu != null && !x.Menu.IsDeleted);
 
             b.HasIndex(x => new { x.MenuId, x.OrganizationUnitId }).IsUnique();
         });
