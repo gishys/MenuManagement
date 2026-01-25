@@ -29,6 +29,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\MenuManagement.Application\MenuManagement.Application.csproj" />
     <ProjectReference Include="..\MenuManagement.HttpApi\MenuManagement.HttpApi.csproj" />
     <ProjectReference Include="..\MenuManagement.EntityFrameworkCore\MenuManagement.EntityFrameworkCore.csproj" />
   </ItemGroup>
