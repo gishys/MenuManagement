@@ -13,14 +13,9 @@ namespace MenuManagement.Domain;
 /// <summary>
 /// 菜单种子数据（基于前端菜单配置）
 /// </summary>
-public class MenuSeedDataContributor : IDataSeedContributor, ITransientDependency
+public class MenuSeedDataContributor(IMenuRepository menuRepository) : IDataSeedContributor, ITransientDependency
 {
-    private readonly IMenuRepository _menuRepository;
-
-    public MenuSeedDataContributor(IMenuRepository menuRepository)
-    {
-        _menuRepository = menuRepository;
-    }
+    private readonly IMenuRepository _menuRepository = menuRepository;
 
     public async Task SeedAsync(DataSeedContext context)
     {
@@ -36,10 +31,12 @@ public class MenuSeedDataContributor : IDataSeedContributor, ITransientDependenc
             id: Guid.NewGuid(),
             name: "系统管理",
             code: "system-management",
-            type: MenuType.Directory);
-        systemManagement.Path = "/system-management";
-        systemManagement.Sort = 10;
-        systemManagement.Icon = "AppstoreOutlined";
+            type: MenuType.Directory)
+        {
+            Path = "/system-management",
+            Sort = 10,
+            Icon = "AppstoreOutlined"
+        };
 
         // 身份管理（目录）
         var identityManagement = new Menu(
@@ -47,9 +44,11 @@ public class MenuSeedDataContributor : IDataSeedContributor, ITransientDependenc
             name: "身份管理",
             code: "identity-management",
             type: MenuType.Directory,
-            parentId: systemManagement.Id);
-        identityManagement.Sort = 20;
-        identityManagement.Icon = "UserOutlined";
+            parentId: systemManagement.Id)
+        {
+            Sort = 20,
+            Icon = "UserOutlined"
+        };
 
         // 身份管理子菜单
         var identityChildren = new List<Menu>
@@ -76,9 +75,11 @@ public class MenuSeedDataContributor : IDataSeedContributor, ITransientDependenc
             name: "消息中心",
             code: "message-center",
             type: MenuType.Directory,
-            parentId: systemManagement.Id);
-        messageCenter.Sort = 40;
-        messageCenter.Icon = "MessageOutlined";
+            parentId: systemManagement.Id)
+        {
+            Sort = 40,
+            Icon = "MessageOutlined"
+        };
 
         var messageCenterChildren = new List<Menu>
         {
@@ -92,9 +93,11 @@ public class MenuSeedDataContributor : IDataSeedContributor, ITransientDependenc
             name: "资源仓库",
             code: "resource-warehouse",
             type: MenuType.Directory,
-            parentId: systemManagement.Id);
-        resourceWarehouse.Sort = 50;
-        resourceWarehouse.Icon = "DatabaseOutlined";
+            parentId: systemManagement.Id)
+        {
+            Sort = 50,
+            Icon = "DatabaseOutlined"
+        };
 
         var resourceWarehouseChildren = new List<Menu>
         {
@@ -109,30 +112,49 @@ public class MenuSeedDataContributor : IDataSeedContributor, ITransientDependenc
             CreateMenu("地理模型执行管理", "resource-warehouse:geo-model-execution-management", "/resource-warehouse/geo-model-execution-management", 9, resourceWarehouse.Id)
         };
 
+        // 资源管理
+        var resourceManagement = new Menu(
+            id: Guid.NewGuid(),
+            name: "资源管理",
+            code: "resource-management",
+            type: MenuType.Directory,
+            parentId: systemManagement.Id)
+        {
+            Sort = 60,
+            Icon = "FolderOutlined"
+        };
+
+        var resourceManagementChildren = new List<Menu>
+        {
+            CreateMenu("资源访问管理", "resource-management:resource-access-management", "/resource-management", 0, resourceManagement.Id),
+            CreateMenu("权限管理", "resource-management:permission-list", "/resource-management/permission", 1, resourceManagement.Id),
+            CreateMenu("审核历史", "resource-management:audit-history", "/resource-management/audit/history", 2, resourceManagement.Id),
+            CreateMenu("审核人管理", "resource-management:auditor-list", "/resource-management/auditor", 3, resourceManagement.Id)
+        };
+
         // 默认模块简易菜单（对应前端 menuConfig）
         var home = CreateMenu("首页", "home", "/", 1);
         home.Icon = "HomeOutlined";
 
-        var formSample = CreateMenu("表单示例", "form-sample", "/form", 2);
-        formSample.Icon = "FormOutlined";
-
-        var tableSample = CreateMenu("表格示例", "table-sample", "/table", 3);
-        tableSample.Icon = "TableOutlined";
+        var oneMap = CreateMenu("一张图", "page", "/page", 2);
+        oneMap.Icon = "EnvironmentOutlined";
 
         // 按层级顺序插入
-        await _menuRepository.InsertManyAsync(new[]
-        {
+        await _menuRepository.InsertManyAsync(
+        [
             systemManagement,
             identityManagement,
             messageCenter,
-            resourceWarehouse
-        }, autoSave: true);
+            resourceWarehouse,
+            resourceManagement
+        ], autoSave: true);
 
         await _menuRepository.InsertManyAsync(identityChildren, autoSave: true);
         await _menuRepository.InsertAsync(menuManagement, autoSave: true);
         await _menuRepository.InsertManyAsync(messageCenterChildren, autoSave: true);
         await _menuRepository.InsertManyAsync(resourceWarehouseChildren, autoSave: true);
-        await _menuRepository.InsertManyAsync(new[] { home, formSample, tableSample }, autoSave: true);
+        await _menuRepository.InsertManyAsync(resourceManagementChildren, autoSave: true);
+        await _menuRepository.InsertManyAsync([home, oneMap], autoSave: true);
     }
 
     private static Menu CreateMenu(
@@ -142,18 +164,17 @@ public class MenuSeedDataContributor : IDataSeedContributor, ITransientDependenc
         int sort,
         Guid? parentId = null)
     {
-        var menu = new Menu(
+        return new Menu(
             id: Guid.NewGuid(),
             name: name,
             code: code,
             type: MenuType.Menu,
-            parentId: parentId);
-
-        menu.Path = path;
-        menu.Sort = sort;
-        menu.Status = MenuStatus.Enabled;
-
-        return menu;
+            parentId: parentId)
+        {
+            Path = path,
+            Sort = sort,
+            Status = MenuStatus.Enabled
+        };
     }
 }
 
