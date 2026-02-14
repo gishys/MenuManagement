@@ -173,7 +173,8 @@ public class MenuSeedDataContributor(IMenuRepository menuRepository) : IDataSeed
         {
             Path = path,
             Sort = sort,
-            Status = MenuStatus.Enabled
+            Status = MenuStatus.Enabled,
+            Permission = code
         };
     }
 }

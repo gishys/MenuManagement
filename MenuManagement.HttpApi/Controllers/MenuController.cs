@@ -102,6 +102,38 @@ public class MenuController(IMenuAppService menuAppService) : AbpControllerBase
     }
 
     /// <summary>
+    /// 获取当前用户可访问的菜单权限标识列表（方案 B：前端按叶子权限过滤）
+    /// </summary>
+    /// <returns>当前用户可访问的 Permission 列表，如 ["resource-warehouse:resource-catalog", "resource-warehouse:datasource-management"]</returns>
+    /// <response code="200">成功返回权限列表</response>
+    /// <response code="401">未授权</response>
+    [HttpGet("my-permissions")]
+    [ProducesResponseType(200, Type = typeof(List<string>))]
+    public async Task<List<string>> GetMyMenuPermissionsAsync()
+    {
+        return await _menuAppService.GetMyMenuPermissionsAsync();
+    }
+
+    /// <summary>
+    /// 按主体获取可访问的菜单权限标识列表（与 getEntityPermissions 对接）。providerName: U=用户,R=角色,O=组织；providerKey=对应 ID
+    /// </summary>
+    /// <param name="providerName">U | R | O</param>
+    /// <param name="providerKey">用户/角色/组织的 Guid</param>
+    /// <returns>该主体可访问的 Permission 列表</returns>
+    /// <response code="200">成功返回权限列表</response>
+    /// <response code="400">参数无效</response>
+    /// <response code="401">未授权</response>
+    [HttpGet("permissions")]
+    [ProducesResponseType(200, Type = typeof(List<string>))]
+    [ProducesResponseType(400, Type = typeof(ProblemDetails))]
+    public async Task<List<string>> GetMenuPermissionsAsync(
+        [FromQuery, Required] string providerName,
+        [FromQuery, Required] string providerKey)
+    {
+        return await _menuAppService.GetMenuPermissionsAsync(providerName, providerKey);
+    }
+
+    /// <summary>
     /// 分配菜单给角色
     /// 为指定角色分配菜单权限，会清除该角色原有的菜单关联，然后设置新的菜单关联
     /// </summary>

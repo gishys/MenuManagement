@@ -43,4 +43,14 @@ public interface IMenuAppService : ICrudAppService<MenuDto, Guid, PagedAndSorted
     /// 启用/禁用菜单
     /// </summary>
     Task SetStatusAsync(Guid id, bool enabled);
+
+    /// <summary>
+    /// 获取当前用户可访问的菜单权限标识列表（用于方案 B 前端按叶子权限过滤）
+    /// </summary>
+    Task<List<string>> GetMyMenuPermissionsAsync();
+
+    /// <summary>
+    /// 按主体获取可访问的菜单权限标识列表。providerName: U=用户,R=角色,O=组织；providerKey: 对应 ID
+    /// </summary>
+    Task<List<string>> GetMenuPermissionsAsync(string providerName, string providerKey);
 }

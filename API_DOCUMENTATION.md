@@ -23,7 +23,8 @@
 
 - ✅ 菜单的 CRUD 操作
 - ✅ 树形菜单结构查询
-- ✅ 根据角色/用户/组织获取菜单
+- ✅ 根据角色/用户/组织获取菜单（含祖先链，仅返回已分配节点及到根的路径）
+- ✅ 获取当前用户/主体可访问的菜单权限标识列表（方案 B：前端按叶子权限过滤）
 - ✅ 菜单与角色/组织的关联管理
 - ✅ 菜单状态管理（启用/禁用）
 
@@ -376,7 +377,7 @@ Authorization: Bearer {token}
 
 **响应**
 
-直接返回菜单列表数组（ABP框架自动处理为200状态码），格式与"获取树形菜单列表"相同，但只返回该角色关联的菜单。
+直接返回菜单列表数组（ABP框架自动处理为200状态码），格式与"获取树形菜单列表"相同，但只返回该角色关联的菜单。树中已补全祖先链，仅包含已分配节点及其到根的路径。
 
 **状态码**
 
@@ -407,7 +408,7 @@ Authorization: Bearer {token}
 
 **响应**
 
-直接返回菜单列表数组（ABP框架自动处理为200状态码），格式与"获取树形菜单列表"相同，但只返回该用户可访问的菜单。
+直接返回菜单列表数组（ABP框架自动处理为200状态码），格式与"获取树形菜单列表"相同，但只返回该用户可访问的菜单。树中已补全祖先链，仅包含已分配节点及其到根的路径。
 
 **状态码**
 
@@ -438,7 +439,7 @@ Authorization: Bearer {token}
 
 **响应**
 
-直接返回菜单列表数组（ABP框架自动处理为200状态码），格式与"获取树形菜单列表"相同，但只返回该组织关联的菜单。
+直接返回菜单列表数组（ABP框架自动处理为200状态码），格式与"获取树形菜单列表"相同，但只返回该组织关联的菜单。树中已补全祖先链，仅包含已分配节点及其到根的路径。
 
 **状态码**
 
@@ -450,9 +451,69 @@ Authorization: Bearer {token}
 
 ---
 
+#### 7. 获取当前用户可访问的菜单权限列表
+
+获取当前登录用户通过角色/组织关联到的所有菜单的 **Permission** 列表（叶子权限标识）。用于方案 B：前端保留全量菜单配置，据此在 SideMenu / 路由守卫处按叶子权限过滤子项。
+
+**请求**
+
+```http
+GET /api/menus/my-permissions
+Authorization: Bearer {token}
+```
+
+**响应**
+
+直接返回字符串数组（ABP框架自动处理为200状态码），为当前用户可访问的菜单 `permission` 字段值（去重、去空）。
+
+```json
+[
+  "resource-warehouse:resource-catalog",
+  "resource-warehouse:datasource-management",
+  "identity-management:user"
+]
+```
+
+**状态码**
+
+- `200 OK` - 成功返回权限列表
+- `401 Unauthorized` - 未授权
+
+---
+
+#### 8. 按主体获取可访问的菜单权限列表
+
+按用户（U）、角色（R）或组织（O）获取该主体可访问的菜单 Permission 列表。与前端 `getEntityPermissions(providerName, providerKey)` 对接，用于按叶子权限过滤或路由守卫。
+
+**请求**
+
+```http
+GET /api/menus/permissions?providerName=U&providerKey={userId}
+Authorization: Bearer {token}
+```
+
+**查询参数**
+
+| 参数名 | 类型 | 必填 | 说明 |
+|--------|------|------|------|
+| providerName | string | 是 | 主体类型：U=用户，R=角色，O=组织 |
+| providerKey | string | 是 | 对应用户/角色/组织的 Guid |
+
+**响应**
+
+直接返回字符串数组（ABP框架自动处理为200状态码），为该主体可访问的菜单 `permission` 列表（去重、去空）。格式与"获取当前用户可访问的菜单权限列表"相同。
+
+**状态码**
+
+- `200 OK` - 成功返回权限列表
+- `400 Bad Request` - 参数无效（如 providerKey 非合法 Guid、providerName 非 U/R/O）
+- `401 Unauthorized` - 未授权
+
+---
+
 ### 菜单管理
 
-#### 7. 创建菜单
+#### 9. 创建菜单
 
 创建一个新的菜单项。
 
@@ -524,7 +585,7 @@ Content-Type: application/json
 
 ---
 
-#### 8. 更新菜单
+#### 10. 更新菜单
 
 更新指定菜单的信息。
 
@@ -579,7 +640,7 @@ Content-Type: application/json
 
 ---
 
-#### 9. 删除菜单
+#### 11. 删除菜单
 
 删除指定ID的菜单。如果菜单有子菜单，需要先删除子菜单。
 
@@ -611,7 +672,7 @@ Authorization: Bearer {token}
 
 ---
 
-#### 10. 启用/禁用菜单
+#### 12. 启用/禁用菜单
 
 设置菜单的启用或禁用状态。禁用的菜单不会在查询结果中返回。
 
@@ -650,7 +711,7 @@ Authorization: Bearer {token}
 
 ### 菜单关联
 
-#### 11. 分配菜单给角色
+#### 13. 分配菜单给角色
 
 为指定角色分配菜单权限。会清除该角色原有的菜单关联，然后设置新的菜单关联。
 
@@ -693,7 +754,7 @@ Content-Type: application/json
 
 ---
 
-#### 12. 分配菜单给组织
+#### 14. 分配菜单给组织
 
 为指定组织分配菜单权限。会清除该组织原有的菜单关联，然后设置新的菜单关联。
 
@@ -847,6 +908,30 @@ async function getMenusByRoleId(roleId) {
   }
 }
 
+// 获取当前用户可访问的菜单权限列表（方案 B：按叶子权限过滤）
+async function getMyMenuPermissions() {
+  try {
+    const response = await apiClient.get('/api/menus/my-permissions');
+    return response.data;
+  } catch (error) {
+    console.error('获取菜单权限列表失败:', error.response?.data || error.message);
+    throw error;
+  }
+}
+
+// 按主体获取可访问的菜单权限列表（与 getEntityPermissions 对接）
+async function getMenuPermissions(providerName, providerKey) {
+  try {
+    const response = await apiClient.get('/api/menus/permissions', {
+      params: { providerName, providerKey }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('获取菜单权限列表失败:', error.response?.data || error.message);
+    throw error;
+  }
+}
+
 // 分配菜单给角色
 async function assignMenusToRole(roleId, menuIds) {
   try {
@@ -981,6 +1066,25 @@ public class MenuApiClient
         return JsonSerializer.Deserialize<List<MenuDto>>(json);
     }
 
+    // 获取当前用户可访问的菜单权限列表（方案 B）
+    public async Task<List<string>> GetMyMenuPermissionsAsync()
+    {
+        var response = await _httpClient.GetAsync("/api/menus/my-permissions");
+        response.EnsureSuccessStatusCode();
+        var json = await response.Content.ReadAsStringAsync();
+        return JsonSerializer.Deserialize<List<string>>(json);
+    }
+
+    // 按主体获取可访问的菜单权限列表
+    public async Task<List<string>> GetMenuPermissionsAsync(string providerName, string providerKey)
+    {
+        var response = await _httpClient.GetAsync(
+            $"/api/menus/permissions?providerName={providerName}&providerKey={providerKey}");
+        response.EnsureSuccessStatusCode();
+        var json = await response.Content.ReadAsStringAsync();
+        return JsonSerializer.Deserialize<List<string>>(json);
+    }
+
     // 分配菜单给角色
     public async Task AssignMenusToRoleAsync(Guid roleId, List<Guid> menuIds)
     {
@@ -1095,6 +1199,16 @@ curl -X GET "http://localhost:5000/api/menus/role/{roleId}" \
   -H "Authorization: Bearer your_access_token" \
   -H "Content-Type: application/json"
 
+# 获取当前用户可访问的菜单权限列表
+curl -X GET "http://localhost:5000/api/menus/my-permissions" \
+  -H "Authorization: Bearer your_access_token" \
+  -H "Content-Type: application/json"
+
+# 按主体获取可访问的菜单权限列表（用户/角色/组织）
+curl -X GET "http://localhost:5000/api/menus/permissions?providerName=U&providerKey={userId}" \
+  -H "Authorization: Bearer your_access_token" \
+  -H "Content-Type: application/json"
+
 # 分配菜单给角色
 curl -X POST "http://localhost:5000/api/menus/role/{roleId}/assign" \
   -H "Authorization: Bearer your_access_token" \
@@ -1142,9 +1256,19 @@ curl -X PUT "http://localhost:5000/api/menus/{menuId}/status?enabled=true" \
 
 前端可以根据返回的菜单列表自行构建树形结构，或直接使用服务端返回的树形结构。
 
+### 6. 按叶子权限过滤（方案 B）
+
+若前端保留全量菜单配置（如 systemManagementMenu.ts），可调用 `GET /api/menus/my-permissions` 或 `GET /api/menus/permissions?providerName=U&providerKey=xxx` 获取当前用户可访问的 Permission 列表，在 SideMenu / 路由守卫处仅当该列表包含某子菜单的 `permission` 时才展示或放行，实现按叶子权限过滤。
+
 ---
 
 ## 更新日志
+
+### v1.1.0
+
+- 新增「获取当前用户可访问的菜单权限列表」接口：`GET /api/menus/my-permissions`
+- 新增「按主体获取可访问的菜单权限列表」接口：`GET /api/menus/permissions?providerName=U|R|O&providerKey=xxx`（与前端 getEntityPermissions 对接，方案 B 按叶子权限过滤）
+- 根据角色/用户/组织获取菜单时补全祖先链，仅返回已分配节点及其到根的路径
 
 ### v1.0.0 (2024-01-01)
 
@@ -1165,5 +1289,5 @@ curl -X PUT "http://localhost:5000/api/menus/{menuId}/status?enabled=true" \
 
 ---
 
-**文档版本**: 1.0.0  
-**最后更新**: 2024-01-01
+**文档版本**: 1.1.0  
+**最后更新**: 2025-02-14

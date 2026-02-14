@@ -4,12 +4,10 @@ using MenuManagement.Domain.Entities;
 using MenuManagement.Domain.Repositories;
 using MenuManagement.Domain.Shared.Enums;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.EntityFrameworkCore;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
-using Volo.Abp.Domain.Repositories;
-using Volo.Abp.EntityFrameworkCore;
 using Volo.Abp.Identity;
+using Volo.Abp.Users;
 
 namespace MenuManagement.Application.Services;
 
@@ -20,19 +18,14 @@ namespace MenuManagement.Application.Services;
 public class MenuAppService(
     IMenuRepository repository,
     IIdentityRoleRepository roleRepository,
-    IIdentityUserRepository userRepository,
-    IDbContextProvider<MenuManagement.EntityFrameworkCore.MenuManagementDbContext> dbContextProvider)
+    IdentityUserManager userManager,
+    ICurrentUser currentUser)
     : CrudAppService<Menu, MenuDto, Guid, PagedAndSortedResultRequestDto, CreateMenuDto, UpdateMenuDto>(repository), IMenuAppService
 {
     private readonly IMenuRepository _menuRepository = repository;
     private readonly IIdentityRoleRepository _roleRepository = roleRepository;
-    private readonly IIdentityUserRepository _userRepository = userRepository;
-    private readonly IDbContextProvider<MenuManagement.EntityFrameworkCore.MenuManagementDbContext> _dbContextProvider = dbContextProvider;
-
-    private async Task<MenuManagement.EntityFrameworkCore.MenuManagementDbContext> GetDbContextAsync()
-    {
-        return await _dbContextProvider.GetDbContextAsync();
-    }
+    private readonly IdentityUserManager _userManager = userManager;
+    private readonly ICurrentUser _currentUser = currentUser;
 
     /// <summary>
     /// 获取树形菜单列表
@@ -53,14 +46,14 @@ public class MenuAppService(
     }
 
     /// <summary>
-    /// 根据角色ID获取菜单
+    /// 根据角色ID获取菜单（含祖先链，仅返回已分配节点及其到根的路径）
     /// </summary>
     public async Task<List<MenuDto>> GetMenusByRoleIdAsync(Guid roleId)
     {
         var menus = await _menuRepository.GetMenusByRoleIdAsync(roleId);
-        var menuDtos = ObjectMapper.Map<List<Menu>, List<MenuDto>>(menus);
+        var withAncestors = await EnsureAncestorsAsync(menus);
+        var menuDtos = ObjectMapper.Map<List<Menu>, List<MenuDto>>(withAncestors);
 
-        // 构建树形结构
         var rootMenus = menuDtos.Where(m => m.ParentId == null).OrderBy(m => m.Sort).ToList();
         foreach (var rootMenu in rootMenus)
         {
@@ -71,14 +64,28 @@ public class MenuAppService(
     }
 
     /// <summary>
-    /// 根据用户ID获取菜单
+    /// 根据用户ID获取菜单（用户→角色+组织→菜单，含祖先链，仅返回已分配节点及其到根的路径）
     /// </summary>
     public async Task<List<MenuDto>> GetMenusByUserIdAsync(Guid userId)
     {
-        var menus = await _menuRepository.GetMenusByUserIdAsync(userId);
-        var menuDtos = ObjectMapper.Map<List<Menu>, List<MenuDto>>(menus);
+        var (roleIds, organizationIds) = await GetUserRoleAndOrganizationIdsAsync(userId);
+        var menusByRole = await _menuRepository.GetMenusByRoleIdsAsync(roleIds);
+        var allMenus = menusByRole.ToDictionary(m => m.Id, m => m);
+        foreach (var orgId in organizationIds)
+        {
+            var menusByOrg = await _menuRepository.GetMenusByOrganizationIdAsync(orgId);
+            foreach (var m in menusByOrg)
+            {
+                if (!allMenus.ContainsKey(m.Id))
+                {
+                    allMenus[m.Id] = m;
+                }
+            }
+        }
+        var merged = allMenus.Values.ToList();
+        var withAncestors = await EnsureAncestorsAsync(merged);
+        var menuDtos = ObjectMapper.Map<List<Menu>, List<MenuDto>>(withAncestors);
 
-        // 构建树形结构
         var rootMenus = menuDtos.Where(m => m.ParentId == null).OrderBy(m => m.Sort).ToList();
         foreach (var rootMenu in rootMenus)
         {
@@ -89,14 +96,54 @@ public class MenuAppService(
     }
 
     /// <summary>
-    /// 根据组织ID获取菜单
+    /// 解析用户对应的角色ID列表与组织ID列表（用户→角色+组织）
+    /// </summary>
+    private async Task<(List<Guid> roleIds, List<Guid> organizationIds)> GetUserRoleAndOrganizationIdsAsync(Guid userId)
+    {
+        var user = await _userManager.GetByIdAsync(userId);
+        if (user == null)
+        {
+            return ([], []);
+        }
+        var roleNames = await _userManager.GetRolesAsync(user);
+        var roleIds = await ResolveRoleNamesToIdsAsync(roleNames);
+        var organizationIds = await GetUserOrganizationIdsAsync(user);
+        return (roleIds, organizationIds);
+    }
+
+    private async Task<List<Guid>> ResolveRoleNamesToIdsAsync(IList<string> roleNames)
+    {
+        if (roleNames == null || roleNames.Count == 0)
+        {
+            return [];
+        }
+        var roleNameSet = roleNames.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var allRoles = await _roleRepository.GetListAsync();
+        return [..allRoles.Where(r => roleNameSet.Contains(r.Name ?? "")).Select(r => r.Id)];
+    }
+
+    private async Task<List<Guid>> GetUserOrganizationIdsAsync(Volo.Abp.Identity.IdentityUser user)
+    {
+        try
+        {
+            var orgUnits = await _userManager.GetOrganizationUnitsAsync(user);
+            return orgUnits?.Select(ou => ou.Id).ToList() ?? [];
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    /// <summary>
+    /// 根据组织ID获取菜单（含祖先链，仅返回已分配节点及其到根的路径）
     /// </summary>
     public async Task<List<MenuDto>> GetMenusByOrganizationIdAsync(Guid organizationId)
     {
         var menus = await _menuRepository.GetMenusByOrganizationIdAsync(organizationId);
-        var menuDtos = ObjectMapper.Map<List<Menu>, List<MenuDto>>(menus);
+        var withAncestors = await EnsureAncestorsAsync(menus);
+        var menuDtos = ObjectMapper.Map<List<Menu>, List<MenuDto>>(withAncestors);
 
-        // 构建树形结构
         var rootMenus = menuDtos.Where(m => m.ParentId == null).OrderBy(m => m.Sort).ToList();
         foreach (var rootMenu in rootMenus)
         {
@@ -104,6 +151,29 @@ public class MenuAppService(
         }
 
         return rootMenus;
+    }
+
+    /// <summary>
+    /// 补全祖先链：在已分配菜单列表上加入所有祖先节点，便于构建完整树
+    /// </summary>
+    private async Task<List<Menu>> EnsureAncestorsAsync(List<Menu> assignedMenus)
+    {
+        if (assignedMenus.Count == 0)
+        {
+            return [];
+        }
+        var idSet = assignedMenus.Select(m => m.Id).ToHashSet();
+        var toLoad = assignedMenus.Select(m => m.ParentId).Where(id => id.HasValue).Select(id => id!.Value).Where(id => !idSet.Contains(id)).ToHashSet();
+        while (toLoad.Count > 0)
+        {
+            var ancestors = await _menuRepository.GetByIdsAsync(toLoad);
+            foreach (var a in ancestors)
+            {
+                idSet.Add(a.Id);
+            }
+            toLoad = [..ancestors.Select(a => a.ParentId).Where(id => id.HasValue).Select(id => id!.Value).Where(id => !idSet.Contains(id))];
+        }
+        return await _menuRepository.GetByIdsAsync(idSet);
     }
 
     /// <summary>
@@ -111,23 +181,8 @@ public class MenuAppService(
     /// </summary>
     public async Task AssignMenusToRoleAsync(Guid roleId, List<Guid> menuIds)
     {
-        var role = await _roleRepository.GetAsync(roleId);
-
-        // 清除现有关联
-        var dbContext = await GetDbContextAsync();
-        var existingMenuRoles = await dbContext.MenuRoles
-            .Where(mr => mr.RoleId == roleId)
-            .ToListAsync();
-        dbContext.MenuRoles.RemoveRange(existingMenuRoles);
-
-        // 添加新关联
-        foreach (var menuId in menuIds)
-        {
-            var menuRole = new MenuRole(menuId, roleId);
-            await dbContext.MenuRoles.AddAsync(menuRole);
-        }
-
-        await dbContext.SaveChangesAsync();
+        await _roleRepository.GetAsync(roleId);
+        await _menuRepository.ReplaceMenusForRoleAsync(roleId, menuIds ?? []);
     }
 
     /// <summary>
@@ -135,21 +190,7 @@ public class MenuAppService(
     /// </summary>
     public async Task AssignMenusToOrganizationAsync(Guid organizationId, List<Guid> menuIds)
     {
-        // 清除现有关联
-        var dbContext = await GetDbContextAsync();
-        var existingMenuOrganizations = await dbContext.MenuOrganizations
-            .Where(mo => mo.OrganizationUnitId == organizationId)
-            .ToListAsync();
-        dbContext.MenuOrganizations.RemoveRange(existingMenuOrganizations);
-
-        // 添加新关联
-        foreach (var menuId in menuIds)
-        {
-            var menuOrganization = new MenuOrganization(menuId, organizationId);
-            await dbContext.MenuOrganizations.AddAsync(menuOrganization);
-        }
-
-        await dbContext.SaveChangesAsync();
+        await _menuRepository.ReplaceMenusForOrganizationAsync(organizationId, menuIds ?? []);
     }
 
     /// <summary>
@@ -160,6 +201,63 @@ public class MenuAppService(
         var menu = await _menuRepository.GetAsync(id);
         menu.Status = enabled ? MenuStatus.Enabled : MenuStatus.Disabled;
         await _menuRepository.UpdateAsync(menu);
+    }
+
+    /// <summary>
+    /// 获取当前用户可访问的菜单权限标识列表（用于方案 B 前端按叶子权限过滤）
+    /// </summary>
+    public async Task<List<string>> GetMyMenuPermissionsAsync()
+    {
+        var userId = _currentUser.Id;
+        if (userId == null)
+        {
+            return [];
+        }
+        return await GetMenuPermissionsAsync("U", userId.Value.ToString());
+    }
+
+    /// <summary>
+    /// 按主体获取可访问的菜单权限标识列表。providerName: U=用户,R=角色,O=组织；providerKey: 对应 ID
+    /// </summary>
+    public async Task<List<string>> GetMenuPermissionsAsync(string providerName, string providerKey)
+    {
+        if (string.IsNullOrWhiteSpace(providerKey) || !Guid.TryParse(providerKey, out var key))
+        {
+            return [];
+        }
+        List<Menu> menus;
+        switch (providerName?.ToUpperInvariant())
+        {
+            case "U":
+                var (roleIds, organizationIds) = await GetUserRoleAndOrganizationIdsAsync(key);
+                var byRole = await _menuRepository.GetMenusByRoleIdsAsync(roleIds);
+                var byId = byRole.ToDictionary(m => m.Id, m => m);
+                foreach (var orgId in organizationIds)
+                {
+                    var byOrg = await _menuRepository.GetMenusByOrganizationIdAsync(orgId);
+                    foreach (var m in byOrg)
+                    {
+                        if (!byId.ContainsKey(m.Id))
+                        {
+                            byId[m.Id] = m;
+                        }
+                    }
+                }
+                menus = [..byId.Values];
+                break;
+            case "R":
+                menus = await _menuRepository.GetMenusByRoleIdAsync(key);
+                break;
+            case "O":
+                menus = await _menuRepository.GetMenusByOrganizationIdAsync(key);
+                break;
+            default:
+                return [];
+        }
+        return [..menus
+            .Where(m => !string.IsNullOrWhiteSpace(m.Permission))
+            .Select(m => m.Permission!)
+            .Distinct()];
     }
 
     /// <summary>
