@@ -37,7 +37,7 @@ public class MenuManagementHttpApiHostModule : AbpModule
         ConfigureSwaggerServices(context, configuration);
     }
 
-    private void ConfigureAuthentication(ServiceConfigurationContext context, IConfiguration configuration)
+    private static void ConfigureAuthentication(ServiceConfigurationContext context, IConfiguration configuration)
     {
         // 使用 SecretKey 验证 token（与 TokenService 生成的 token 格式匹配）
         // 注意：SecretKey必须与token来源项目完全一致
@@ -53,8 +53,8 @@ public class MenuManagementHttpApiHostModule : AbpModule
         // 记录配置信息（用于调试）- 显示SecretKey的前10个字符和长度，不显示完整值
         var logger = context.Services.BuildServiceProvider()
             .GetRequiredService<ILogger<MenuManagementHttpApiHostModule>>();
-        var secretKeyPreview = secretKey?.Length > 10 
-            ? secretKey.Substring(0, 10) + "..." 
+        var secretKeyPreview = (secretKey?.Length ?? 0) > 10
+            ? string.Concat(secretKey!.AsSpan(0, 10), "...")
             : secretKey;
         logger.LogInformation("JWT认证配置 - Issuer: {Issuer}, Audience: {Audience}, SecretKey预览: {SecretKeyPreview}, SecretKey长度: {SecretKeyLength}", 
             issuer, audience, secretKeyPreview, secretKey?.Length ?? 0);
@@ -64,7 +64,7 @@ public class MenuManagementHttpApiHostModule : AbpModule
             {
                 // 构建可能的Issuer列表（兼容http和https，以及不同的端口）
                 // token来源项目配置的Authority是44307，但实际运行在44359端口
-                var possibleIssuers = new List<string> { issuer };
+                var possibleIssuers = new List<string>([issuer]);
                 
                 // 添加http和https版本
                 if (issuer.StartsWith("http://"))
@@ -85,10 +85,10 @@ public class MenuManagementHttpApiHostModule : AbpModule
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey!)),
                     ValidateIssuer = true,
                     // 支持多个可能的Issuer值（兼容http和https，以及不同的端口配置）
-                    ValidIssuers = possibleIssuers.Distinct().ToArray(),
+                    ValidIssuers = [..possibleIssuers.Distinct()],
                     ValidateAudience = true,
                     ValidAudience = audience,
                     ValidateLifetime = true,
@@ -108,7 +108,7 @@ public class MenuManagementHttpApiHostModule : AbpModule
                             "JWT 认证失败 - 错误类型: {ExceptionType}, 消息: {Message}, Token长度: {TokenLength}",
                             exception.GetType().Name,
                             exception.Message,
-                            authContext.Request.Headers["Authorization"].ToString().Length);
+                            authContext.Request.Headers.Authorization.ToString().Length);
                         
                         // 如果是签名验证失败，记录更详细的信息
                         if (exception is SecurityTokenSignatureKeyNotFoundException)
@@ -117,8 +117,8 @@ public class MenuManagementHttpApiHostModule : AbpModule
                                 .GetRequiredService<IConfiguration>();
                             var currentSecretKey = config["AuthServer:SecretKey"] 
                                 ?? "HxAbpGeo_DefaultSecretKey_For_JWT_Token_Generation";
-                            var secretKeyPreview = currentSecretKey.Length > 20 
-                                ? currentSecretKey.Substring(0, 20) + "..." 
+                            var secretKeyPreview = currentSecretKey.Length > 20
+                                ? string.Concat(currentSecretKey.AsSpan(0, 20), "...")
                                 : currentSecretKey;
                             eventLogger.LogError("签名验证失败 - 当前使用的SecretKey预览: {SecretKeyPreview}, 长度: {SecretKeyLength}", 
                                 secretKeyPreview, currentSecretKey.Length);
@@ -129,7 +129,7 @@ public class MenuManagementHttpApiHostModule : AbpModule
                         else if (exception is SecurityTokenInvalidIssuerException)
                         {
                             eventLogger.LogError("Issuer验证失败 - 期望: {ExpectedIssuers}, 请检查token中的iss声明",
-                                string.Join(", ", options.TokenValidationParameters.ValidIssuers ?? new[] { issuer }));
+                                string.Join(", ", options.TokenValidationParameters.ValidIssuers ?? [issuer]));
                         }
                         else if (exception is SecurityTokenInvalidAudienceException)
                         {
@@ -169,13 +169,13 @@ public class MenuManagementHttpApiHostModule : AbpModule
             });
     }
 
-    private void ConfigureSwaggerServices(ServiceConfigurationContext context, IConfiguration configuration)
+    private static void ConfigureSwaggerServices(ServiceConfigurationContext context, IConfiguration configuration)
     {
         context.Services.AddAbpSwaggerGenWithOAuth(
             configuration["AuthServer:Authority"] ?? throw new InvalidOperationException("AuthServer:Authority is not configured"),
             new Dictionary<string, string>
             {
-                { "MenuManagement", "MenuManagement API" }
+                ["MenuManagement"] = "MenuManagement API"
             },
             options =>
             {
