@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using MenuManagement.Domain.Entities;
 using MenuManagement.Domain.Repositories;
@@ -7,15 +8,24 @@ using MenuManagement.Domain.Shared.Enums;
 using Volo.Abp.Data;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Domain.Entities;
+using Volo.Abp.Identity;
 
 namespace MenuManagement.Domain;
 
 /// <summary>
 /// 菜单种子数据（基于前端菜单配置）
 /// </summary>
-public class MenuSeedDataContributor(IMenuRepository menuRepository) : IDataSeedContributor, ITransientDependency
+public class MenuSeedDataContributor(
+    IMenuRepository menuRepository,
+    IIdentityRoleRepository roleRepository) : IDataSeedContributor, ITransientDependency
 {
     private readonly IMenuRepository _menuRepository = menuRepository;
+    private readonly IIdentityRoleRepository _roleRepository = roleRepository;
+
+    /// <summary>
+    /// admin 角色的 NormalizedName（ABP 默认管理员角色）
+    /// </summary>
+    private const string AdminRoleNormalizedName = "ADMIN";
 
     public async Task SeedAsync(DataSeedContext context)
     {
@@ -155,6 +165,28 @@ public class MenuSeedDataContributor(IMenuRepository menuRepository) : IDataSeed
         await _menuRepository.InsertManyAsync(resourceWarehouseChildren, autoSave: true);
         await _menuRepository.InsertManyAsync(resourceManagementChildren, autoSave: true);
         await _menuRepository.InsertManyAsync([home, oneMap], autoSave: true);
+
+        // 为 admin 角色赋予所有菜单权限
+        var adminRole = await _roleRepository.FindByNormalizedNameAsync(AdminRoleNormalizedName);
+        if (adminRole != null)
+        {
+            var allMenuIds = new List<Guid>
+            {
+                systemManagement.Id,
+                identityManagement.Id,
+                messageCenter.Id,
+                resourceWarehouse.Id,
+                resourceManagement.Id,
+                menuManagement.Id,
+                home.Id,
+                oneMap.Id
+            };
+            allMenuIds.AddRange(identityChildren.Select(m => m.Id));
+            allMenuIds.AddRange(messageCenterChildren.Select(m => m.Id));
+            allMenuIds.AddRange(resourceWarehouseChildren.Select(m => m.Id));
+            allMenuIds.AddRange(resourceManagementChildren.Select(m => m.Id));
+            await _menuRepository.ReplaceMenusForRoleAsync(adminRole.Id, allMenuIds);
+        }
     }
 
     private static Menu CreateMenu(
