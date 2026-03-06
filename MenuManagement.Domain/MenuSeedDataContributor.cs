@@ -13,7 +13,8 @@ using Volo.Abp.Identity;
 namespace MenuManagement.Domain;
 
 /// <summary>
-/// 菜单种子数据（基于前端菜单配置）
+/// 菜单种子数据（与前端 menu/config 对齐）。
+/// 后端无 key 概念，仅有 Code、Path；目录节点不设 Path，前端转换时 key=Id，避免与子项 path 重复。
 /// </summary>
 public class MenuSeedDataContributor(
     IMenuRepository menuRepository,
@@ -36,25 +37,23 @@ public class MenuSeedDataContributor(
             return;
         }
 
-        // 根：系统管理模块
-        var systemManagement = new Menu(
-            id: Guid.NewGuid(),
-            name: "系统管理",
+        // 地图服务管理（与前端 systemManagementMenu 首项一致，无父级）
+        var mapServiceManagement = CreateMenu(
+            name: "地图服务管理",
             code: "system-management",
-            type: MenuType.Directory)
-        {
-            Path = "/system-management",
-            Sort = 10,
-            Icon = "AppstoreOutlined"
-        };
+            path: "/system-management",
+            sort: 10,
+            parentId: null,
+            permission: "SystemManagement.MapService");
+        mapServiceManagement.Icon = "AppstoreOutlined";
 
-        // 身份管理（目录）
+        // 身份管理（目录，顶级与前端一致）
         var identityManagement = new Menu(
             id: Guid.NewGuid(),
             name: "身份管理",
             code: "identity-management",
             type: MenuType.Directory,
-            parentId: systemManagement.Id)
+            parentId: null)
         {
             Sort = 20,
             Icon = "UserOutlined"
@@ -76,7 +75,7 @@ public class MenuSeedDataContributor(
             code: "menu-management",
             path: "/menu-management",
             sort: 30,
-            parentId: systemManagement.Id,
+            parentId: null,
             permission: "SystemManagement.MenuManagement");
         menuManagement.Icon = "MenuOutlined";
 
@@ -86,7 +85,7 @@ public class MenuSeedDataContributor(
             name: "消息中心",
             code: "message-center",
             type: MenuType.Directory,
-            parentId: systemManagement.Id)
+            parentId: null)
         {
             Sort = 40,
             Icon = "MessageOutlined"
@@ -104,7 +103,7 @@ public class MenuSeedDataContributor(
             name: "资源仓库",
             code: "resource-warehouse",
             type: MenuType.Directory,
-            parentId: systemManagement.Id)
+            parentId: null)
         {
             Sort = 50,
             Icon = "DatabaseOutlined"
@@ -123,13 +122,13 @@ public class MenuSeedDataContributor(
             CreateMenu("地理模型执行管理", "resource-warehouse:geo-model-execution-management", "/resource-warehouse/geo-model-execution-management", 9, resourceWarehouse.Id, "SystemManagement.GeoModelExecutionManagement")
         };
 
-        // 资源管理（Permission 使用点式 ABP 权限名）
+        // 资源管理（目录不设 Path，前端转换时 key=Id 避免与子项 path 重复；Permission 与前端 systemManagementMenu 一致）
         var resourceManagement = new Menu(
             id: Guid.NewGuid(),
             name: "资源管理",
             code: "resource-management",
             type: MenuType.Directory,
-            parentId: systemManagement.Id)
+            parentId: null)
         {
             Sort = 60,
             Icon = "FolderOutlined"
@@ -143,6 +142,25 @@ public class MenuSeedDataContributor(
             CreateMenu("审核人管理", "resource-management:auditor-list", "/resource-management/auditor", 3, resourceManagement.Id, "ResourceManagement.AuditorList")
         };
 
+        // 数据采集与治理（目录不设 Path，前端 key=Id 避免重复；权限与前端 dataCollectionMenu 一致）
+        var dataCollection = new Menu(
+            id: Guid.NewGuid(),
+            name: "数据采集",
+            code: "data-collection",
+            type: MenuType.Directory,
+            parentId: null)
+        {
+            Sort = 55,
+            Icon = "DatabaseOutlined"
+        };
+
+        var dataCollectionChildren = new List<Menu>
+        {
+            CreateMenu("数据采集工作台", "data-collection:workbench", "/data-collection", 1, dataCollection.Id, "SystemManagement.DataCollection"),
+            CreateMenu("字典管理", "data-collection:dictionary", "/data-collection/dictionary", 2, dataCollection.Id, "SystemManagement.DictionaryManagement"),
+            CreateMenu("模板与规则管理", "data-collection:template", "/data-collection/template", 3, dataCollection.Id, "SystemManagement.DataGovernanceAdmin")
+        };
+
         // 默认模块简易菜单（无权限要求，Permission 为空）
         var home = CreateMenu("首页", "home", "/", 1, null, null);
         home.Icon = "HomeOutlined";
@@ -150,14 +168,15 @@ public class MenuSeedDataContributor(
         var oneMap = CreateMenu("一张图", "page", "/page", 2, null, null);
         oneMap.Icon = "EnvironmentOutlined";
 
-        // 按层级顺序插入
+        // 按层级顺序插入（与前端扁平结构一致，无“系统管理”根节点）
         await _menuRepository.InsertManyAsync(
         [
-            systemManagement,
+            mapServiceManagement,
             identityManagement,
             messageCenter,
             resourceWarehouse,
-            resourceManagement
+            resourceManagement,
+            dataCollection
         ], autoSave: true);
 
         await _menuRepository.InsertManyAsync(identityChildren, autoSave: true);
@@ -165,6 +184,7 @@ public class MenuSeedDataContributor(
         await _menuRepository.InsertManyAsync(messageCenterChildren, autoSave: true);
         await _menuRepository.InsertManyAsync(resourceWarehouseChildren, autoSave: true);
         await _menuRepository.InsertManyAsync(resourceManagementChildren, autoSave: true);
+        await _menuRepository.InsertManyAsync(dataCollectionChildren, autoSave: true);
         await _menuRepository.InsertManyAsync([home, oneMap], autoSave: true);
 
         // 为 admin 角色赋予所有菜单权限
@@ -173,11 +193,12 @@ public class MenuSeedDataContributor(
         {
             var allMenuIds = new List<Guid>
             {
-                systemManagement.Id,
+                mapServiceManagement.Id,
                 identityManagement.Id,
                 messageCenter.Id,
                 resourceWarehouse.Id,
                 resourceManagement.Id,
+                dataCollection.Id,
                 menuManagement.Id,
                 home.Id,
                 oneMap.Id
@@ -186,6 +207,7 @@ public class MenuSeedDataContributor(
             allMenuIds.AddRange(messageCenterChildren.Select(m => m.Id));
             allMenuIds.AddRange(resourceWarehouseChildren.Select(m => m.Id));
             allMenuIds.AddRange(resourceManagementChildren.Select(m => m.Id));
+            allMenuIds.AddRange(dataCollectionChildren.Select(m => m.Id));
             await _menuRepository.ReplaceMenusForRoleAsync(adminRole.Id, allMenuIds);
         }
     }
