@@ -117,9 +117,11 @@ public class MenuSeedDataContributor(
             CreateMenu("数据源管理", "resource-warehouse:datasource-management", "/resource-warehouse/datasource-management", 4, resourceWarehouse.Id, "SystemManagement.Datasource"),
             CreateMenu("地理模型管理", "resource-warehouse:geo-model-management", "/resource-warehouse/geo-model-management", 5, resourceWarehouse.Id, "SystemManagement.GeoModelManagement"),
             CreateMenu("地理模型参数模板管理", "resource-warehouse:geo-model-parameter-template-management", "/resource-warehouse/geo-model-parameter-template-management", 6, resourceWarehouse.Id, "SystemManagement.GeoModelParameterTemplate"),
-            CreateMenu("异步任务管理", "resource-warehouse:task-management", "/resource-warehouse/task-management", 7, resourceWarehouse.Id, "SystemManagement.TaskManagement"),
-            CreateMenu("文件管理", "resource-warehouse:file-management", "/resource-warehouse/file-management", 8, resourceWarehouse.Id, "SystemManagement.FileManagement"),
-            CreateMenu("地理模型执行管理", "resource-warehouse:geo-model-execution-management", "/resource-warehouse/geo-model-execution-management", 9, resourceWarehouse.Id, "SystemManagement.GeoModelExecutionManagement")
+            CreateMenu("实体类型管理", "resource-warehouse:entity-type-management", "/resource-warehouse/entity-type-management", 7, resourceWarehouse.Id, "SystemManagement.EntityTypeManagement"),
+            CreateMenu("关系类型管理", "resource-warehouse:relation-type-management", "/resource-warehouse/relation-type-management", 8, resourceWarehouse.Id, "SystemManagement.RelationTypeManagement"),
+            CreateMenu("异步任务管理", "resource-warehouse:task-management", "/resource-warehouse/task-management", 9, resourceWarehouse.Id, "SystemManagement.TaskManagement"),
+            CreateMenu("文件管理", "resource-warehouse:file-management", "/resource-warehouse/file-management", 10, resourceWarehouse.Id, "SystemManagement.FileManagement"),
+            CreateMenu("地理模型执行管理", "resource-warehouse:geo-model-execution-management", "/resource-warehouse/geo-model-execution-management", 11, resourceWarehouse.Id, "SystemManagement.GeoModelExecutionManagement")
         };
 
         // 资源管理（目录不设 Path，前端转换时 key=Id 避免与子项 path 重复；Permission 与前端 systemManagementMenu 一致）
