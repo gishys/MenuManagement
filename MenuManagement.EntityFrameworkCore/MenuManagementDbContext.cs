@@ -4,6 +4,9 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Volo.Abp.Data;
 using Volo.Abp.EntityFrameworkCore;
 using Volo.Abp.EntityFrameworkCore.Modeling;
+using Volo.Abp.FeatureManagement.EntityFrameworkCore;
+using Volo.Abp.Identity.EntityFrameworkCore;
+using Volo.Abp.PermissionManagement.EntityFrameworkCore;
 
 namespace MenuManagement.EntityFrameworkCore;
 
@@ -32,8 +35,9 @@ public class MenuManagementDbContext(DbContextOptions<MenuManagementDbContext> o
     {
         base.OnModelCreating(builder);
 
-        //builder.ConfigurePermissionManagement();
-        //builder.ConfigureIdentity();
+        builder.ConfigurePermissionManagement();
+        builder.ConfigureIdentity();
+        builder.ConfigureFeatureManagement();
 
         // 配置所有 DateTime 属性使用 UTC（PostgreSQL timestamp with time zone 要求）
         // 使用共享的转换器实例以提高性能

@@ -1,4 +1,5 @@
 using MenuManagement.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Serilog;
 using Serilog.Events;
 
@@ -32,6 +33,14 @@ public class Program
                 .UseSerilog();
             await builder.AddApplicationAsync<MenuManagementHttpApiHostModule>();
             var app = builder.Build();
+
+            if (app.Environment.IsDevelopment())
+            {
+                using var scope = app.Services.CreateScope();
+                var db = scope.ServiceProvider.GetRequiredService<MenuManagementDbContext>();
+                await db.Database.MigrateAsync();
+            }
+
             await app.InitializeApplicationAsync();
             await app.RunAsync();
             return 0;
