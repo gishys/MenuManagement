@@ -141,11 +141,12 @@ public class MenuSeedDataContributor(
             await EnsureMenuAsync(CreateMenu("数据源管理", "resource-warehouse:datasource-management", "/resource-warehouse/datasource-management", 4, resourceWarehouse.Id, "SystemManagement.Datasource")),
             await EnsureMenuAsync(CreateMenu("地理模型管理", "resource-warehouse:geo-model-management", "/resource-warehouse/geo-model-management", 5, resourceWarehouse.Id, "SystemManagement.GeoModelManagement")),
             await EnsureMenuAsync(CreateMenu("地理模型参数模板管理", "resource-warehouse:geo-model-parameter-template-management", "/resource-warehouse/geo-model-parameter-template-management", 6, resourceWarehouse.Id, "SystemManagement.GeoModelParameterTemplate")),
-            await EnsureMenuAsync(CreateMenu("实体类型管理", "resource-warehouse:entity-type-management", "/resource-warehouse/entity-type-management", 7, resourceWarehouse.Id, "SystemManagement.EntityTypeManagement")),
-            await EnsureMenuAsync(CreateMenu("关系类型管理", "resource-warehouse:relation-type-management", "/resource-warehouse/relation-type-management", 8, resourceWarehouse.Id, "SystemManagement.RelationTypeManagement")),
-            await EnsureMenuAsync(CreateMenu("异步任务管理", "resource-warehouse:task-management", "/resource-warehouse/task-management", 9, resourceWarehouse.Id, "SystemManagement.TaskManagement")),
-            await EnsureMenuAsync(CreateMenu("文件管理", "resource-warehouse:file-management", "/resource-warehouse/file-management", 10, resourceWarehouse.Id, "SystemManagement.FileManagement")),
-            await EnsureMenuAsync(CreateMenu("地理模型执行管理", "resource-warehouse:geo-model-execution-management", "/resource-warehouse/geo-model-execution-management", 11, resourceWarehouse.Id, "SystemManagement.GeoModelExecutionManagement"))
+            await EnsureMenuAsync(CreateMenu("矢量服务接口配置", "resource-warehouse:vector-service-interface-management", "/resource-warehouse/vector-service-interface-management", 7, resourceWarehouse.Id, "SystemManagement.VectorServiceInterface", "ApartmentOutlined")),
+            await EnsureMenuAsync(CreateMenu("实体类型管理", "resource-warehouse:entity-type-management", "/resource-warehouse/entity-type-management", 8, resourceWarehouse.Id, "SystemManagement.EntityTypeManagement")),
+            await EnsureMenuAsync(CreateMenu("关系类型管理", "resource-warehouse:relation-type-management", "/resource-warehouse/relation-type-management", 9, resourceWarehouse.Id, "SystemManagement.RelationTypeManagement")),
+            await EnsureMenuAsync(CreateMenu("异步任务管理", "resource-warehouse:task-management", "/resource-warehouse/task-management", 10, resourceWarehouse.Id, "SystemManagement.TaskManagement")),
+            await EnsureMenuAsync(CreateMenu("文件管理", "resource-warehouse:file-management", "/resource-warehouse/file-management", 11, resourceWarehouse.Id, "SystemManagement.FileManagement")),
+            await EnsureMenuAsync(CreateMenu("地理模型执行管理", "resource-warehouse:geo-model-execution-management", "/resource-warehouse/geo-model-execution-management", 12, resourceWarehouse.Id, "SystemManagement.GeoModelExecutionManagement"))
         };
 
         // 资源管理（目录不设 Path，前端转换时 key=Id 避免与子项 path 重复；Permission 与前端 systemManagementMenu 一致）
@@ -229,13 +230,15 @@ public class MenuSeedDataContributor(
     }
 
     /// <param name="permission">ABP 权限名（与主后端 MenuPermissionNames 一致）；为 null 时表示无权限要求（如首页、一张图）</param>
+    /// <param name="icon">Ant Design 图标组件名（与前端菜单一致）</param>
     private static Menu CreateMenu(
         string name,
         string code,
         string path,
         int sort,
         Guid? parentId = null,
-        string? permission = null)
+        string? permission = null,
+        string? icon = null)
     {
         return new Menu(
             id: Guid.NewGuid(),
@@ -247,7 +250,8 @@ public class MenuSeedDataContributor(
             Path = path,
             Sort = sort,
             Status = MenuStatus.Enabled,
-            Permission = permission
+            Permission = permission,
+            Icon = icon
         };
     }
 
@@ -265,7 +269,7 @@ public class MenuSeedDataContributor(
         if (existing.Type != menu.Type) { existing.Type = menu.Type; changed = true; }
         if (existing.ParentId != menu.ParentId) { existing.ParentId = menu.ParentId; changed = true; }
         if (existing.Path == null && menu.Path != null) { existing.Path = menu.Path; changed = true; }
-        if (existing.Permission == null && menu.Permission != null) { existing.Permission = menu.Permission; changed = true; }
+        if (string.IsNullOrWhiteSpace(existing.Permission) && !string.IsNullOrWhiteSpace(menu.Permission)) { existing.Permission = menu.Permission; changed = true; }
         if (string.IsNullOrWhiteSpace(existing.Icon) && !string.IsNullOrWhiteSpace(menu.Icon)) { existing.Icon = menu.Icon; changed = true; }
         if (existing.Status != MenuStatus.Enabled) { existing.Status = MenuStatus.Enabled; changed = true; }
         if (changed)
