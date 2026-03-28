@@ -9,7 +9,7 @@ public class Program
 {
     public async static Task<int> Main(string[] args)
     {
-        // ÅäÖÃ Npgsql ÒÔÕıÈ·´¦Àí DateTime£¨±ØĞëÔÚÈÎºÎÊı¾İ¿â²Ù×÷Ö®Ç°ÉèÖÃ£©
+        // ï¿½ï¿½ï¿½ï¿½ Npgsql ï¿½ï¿½ï¿½ï¿½È·ï¿½ï¿½ï¿½ï¿½ DateTimeï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îºï¿½ï¿½ï¿½ï¿½İ¿ï¿½ï¿½ï¿½ï¿½Ö®Ç°ï¿½ï¿½ï¿½Ã£ï¿½
         AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", false);
         Log.Logger = new LoggerConfiguration()
 #if DEBUG

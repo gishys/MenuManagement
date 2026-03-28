@@ -15,6 +15,7 @@ namespace MenuManagement.Domain;
 /// <summary>
 /// 菜单种子数据（与前端 menu/config 对齐）。
 /// 后端无 key 概念，仅有 Code、Path；目录节点不设 Path，前端转换时 key=Id，避免与子项 path 重复。
+/// 所有菜单项均配置 Icon，保证前端完全由后端 icon 字段驱动，无需静态兜底。
 /// </summary>
 public class MenuSeedDataContributor(
     IMenuRepository menuRepository,
@@ -31,9 +32,8 @@ public class MenuSeedDataContributor(
     public async Task SeedAsync(DataSeedContext context)
     {
         // 约定：种子数据需要幂等（可重复执行、只补缺失项，不覆盖人工配置）
-        // 早期实现是“库里有数据就跳过”，会导致新增菜单项无法进入已有环境。
 
-        // 地图服务管理（与前端 systemManagementMenu 首项一致，无父级）
+        // 地图服务管理（与前端 systemManagementMenu 首项一致）
         var mapServiceManagement = await EnsureMenuAsync(new Menu(
             id: Guid.NewGuid(),
             name: "地图服务管理",
@@ -45,7 +45,7 @@ public class MenuSeedDataContributor(
             Sort = 10,
             Status = MenuStatus.Enabled,
             Permission = "SystemManagement.MapService",
-            Icon = "AppstoreOutlined"
+            Icon = "CompassOutlined"
         });
 
         // 身份管理（目录，顶级与前端一致）
@@ -61,14 +61,14 @@ public class MenuSeedDataContributor(
             Status = MenuStatus.Enabled
         });
 
-        // 身份管理子菜单（Permission 使用与主后端/ABP 一致的权限名）
+        // 身份管理子菜单
         var identityChildren = new List<Menu>
         {
-            await EnsureMenuAsync(CreateMenu("用户管理", "identity-management:user", "/identity-management/user-management", 1, identityManagement.Id, "Identity.Users")),
-            await EnsureMenuAsync(CreateMenu("角色管理", "identity-management:role", "/identity-management/role-management", 2, identityManagement.Id, "Identity.Roles")),
-            await EnsureMenuAsync(CreateMenu("组织管理", "identity-management:organization", "/identity-management/organization-management", 3, identityManagement.Id, "Identity.OrganizationUnits")),
-            await EnsureMenuAsync(CreateMenu("权限管理", "identity-management:permission", "/identity-management/permission-management", 4, identityManagement.Id, "Identity.Roles")),
-            await EnsureMenuAsync(CreateMenu("关联管理", "identity-management:association", "/identity-management/association-management", 5, identityManagement.Id, "Identity.OrganizationUnits"))
+            await EnsureMenuAsync(CreateMenu("用户管理", "identity-management:user", "/identity-management/user-management", 1, identityManagement.Id, "Identity.Users", "TeamOutlined")),
+            await EnsureMenuAsync(CreateMenu("角色管理", "identity-management:role", "/identity-management/role-management", 2, identityManagement.Id, "Identity.Roles", "SafetyCertificateOutlined")),
+            await EnsureMenuAsync(CreateMenu("组织管理", "identity-management:organization", "/identity-management/organization-management", 3, identityManagement.Id, "Identity.OrganizationUnits", "ApartmentOutlined")),
+            await EnsureMenuAsync(CreateMenu("权限管理", "identity-management:permission", "/identity-management/permission-management", 4, identityManagement.Id, "Identity.Roles", "KeyOutlined")),
+            await EnsureMenuAsync(CreateMenu("关联管理", "identity-management:association", "/identity-management/association-management", 5, identityManagement.Id, "Identity.OrganizationUnits", "LinkOutlined"))
         };
 
         // 菜单管理
@@ -101,11 +101,11 @@ public class MenuSeedDataContributor(
 
         var messageCenterChildren = new List<Menu>
         {
-            await EnsureMenuAsync(CreateMenu("消息列表", "message-center:message-list", "/message-center/message-list", 1, messageCenter.Id, "SystemManagement.MessageCenter")),
-            await EnsureMenuAsync(CreateMenu("消息模板管理", "message-center:template-management", "/message-center/template-management", 2, messageCenter.Id, "SystemManagement.MessageCenter"))
+            await EnsureMenuAsync(CreateMenu("消息列表", "message-center:message-list", "/message-center/message-list", 1, messageCenter.Id, "SystemManagement.MessageCenter", "UnorderedListOutlined")),
+            await EnsureMenuAsync(CreateMenu("消息模板管理", "message-center:template-management", "/message-center/template-management", 2, messageCenter.Id, "SystemManagement.MessageCenter", "FileTextOutlined"))
         };
 
-        // 日志与行为管理（主后端权限：Geo.Logs.View；前端路由：/logs-management）
+        // 日志与行为管理
         var logsManagement = await EnsureMenuAsync(new Menu(
             id: Guid.NewGuid(),
             name: "日志与行为管理",
@@ -135,21 +135,23 @@ public class MenuSeedDataContributor(
 
         var resourceWarehouseChildren = new List<Menu>
         {
-            await EnsureMenuAsync(CreateMenu("二维服务", "resource-warehouse:two-dimensional-service", "/resource-warehouse/two-dimensional-service", 1, resourceWarehouse.Id, "SystemManagement.TwoDimensionalService")),
-            await EnsureMenuAsync(CreateMenu("资源编目", "resource-warehouse:resource-catalog", "/resource-warehouse/resource-catalog", 2, resourceWarehouse.Id, "SystemManagement.ResourceCatalog")),
-            await EnsureMenuAsync(CreateMenu("组织授权", "resource-warehouse:organization-authorization", "/resource-warehouse/organization-authorization", 3, resourceWarehouse.Id, "SystemManagement.OrganizationAuthorization")),
-            await EnsureMenuAsync(CreateMenu("数据源管理", "resource-warehouse:datasource-management", "/resource-warehouse/datasource-management", 4, resourceWarehouse.Id, "SystemManagement.Datasource")),
-            await EnsureMenuAsync(CreateMenu("地理模型管理", "resource-warehouse:geo-model-management", "/resource-warehouse/geo-model-management", 5, resourceWarehouse.Id, "SystemManagement.GeoModelManagement")),
-            await EnsureMenuAsync(CreateMenu("地理模型参数模板管理", "resource-warehouse:geo-model-parameter-template-management", "/resource-warehouse/geo-model-parameter-template-management", 6, resourceWarehouse.Id, "SystemManagement.GeoModelParameterTemplate")),
-            await EnsureMenuAsync(CreateMenu("矢量服务接口配置", "resource-warehouse:vector-service-interface-management", "/resource-warehouse/vector-service-interface-management", 7, resourceWarehouse.Id, "SystemManagement.VectorServiceInterface", "ApartmentOutlined")),
-            await EnsureMenuAsync(CreateMenu("实体类型管理", "resource-warehouse:entity-type-management", "/resource-warehouse/entity-type-management", 8, resourceWarehouse.Id, "SystemManagement.EntityTypeManagement")),
-            await EnsureMenuAsync(CreateMenu("关系类型管理", "resource-warehouse:relation-type-management", "/resource-warehouse/relation-type-management", 9, resourceWarehouse.Id, "SystemManagement.RelationTypeManagement")),
-            await EnsureMenuAsync(CreateMenu("异步任务管理", "resource-warehouse:task-management", "/resource-warehouse/task-management", 10, resourceWarehouse.Id, "SystemManagement.TaskManagement")),
-            await EnsureMenuAsync(CreateMenu("文件管理", "resource-warehouse:file-management", "/resource-warehouse/file-management", 11, resourceWarehouse.Id, "SystemManagement.FileManagement")),
-            await EnsureMenuAsync(CreateMenu("地理模型执行管理", "resource-warehouse:geo-model-execution-management", "/resource-warehouse/geo-model-execution-management", 12, resourceWarehouse.Id, "SystemManagement.GeoModelExecutionManagement"))
+            await EnsureMenuAsync(CreateMenu("二维服务", "resource-warehouse:two-dimensional-service", "/resource-warehouse/two-dimensional-service", 1, resourceWarehouse.Id, "SystemManagement.TwoDimensionalService", "EnvironmentOutlined")),
+            await EnsureMenuAsync(CreateMenu("资源编目", "resource-warehouse:resource-catalog", "/resource-warehouse/resource-catalog", 2, resourceWarehouse.Id, "SystemManagement.ResourceCatalog", "BookOutlined")),
+            await EnsureMenuAsync(CreateMenu("组织授权", "resource-warehouse:organization-authorization", "/resource-warehouse/organization-authorization", 3, resourceWarehouse.Id, "SystemManagement.OrganizationAuthorization", "AuditOutlined")),
+            await EnsureMenuAsync(CreateMenu("数据源管理", "resource-warehouse:datasource-management", "/resource-warehouse/datasource-management", 4, resourceWarehouse.Id, "SystemManagement.Datasource", "HddOutlined")),
+            await EnsureMenuAsync(CreateMenu("地理模型管理", "resource-warehouse:geo-model-management", "/resource-warehouse/geo-model-management", 5, resourceWarehouse.Id, "SystemManagement.GeoModelManagement", "NodeIndexOutlined")),
+            await EnsureMenuAsync(CreateMenu("地理模型参数模板管理", "resource-warehouse:geo-model-parameter-template-management", "/resource-warehouse/geo-model-parameter-template-management", 6, resourceWarehouse.Id, "SystemManagement.GeoModelParameterTemplate", "SettingOutlined")),
+            await EnsureMenuAsync(CreateMenu("矢量服务接口配置", "resource-warehouse:vector-service-interface-management", "/resource-warehouse/vector-service-interface-management", 7, resourceWarehouse.Id, "SystemManagement.VectorServiceInterface", "ApiOutlined")),
+            await EnsureMenuAsync(CreateMenu("专题分析配置", "resource-warehouse:thematic-analysis-config-management", "/resource-warehouse/thematic-analysis-config-management", 8, resourceWarehouse.Id, "SystemManagement.GeoModelManagement", "PieChartOutlined")),
+            await EnsureMenuAsync(CreateMenu("实体类型管理", "resource-warehouse:entity-type-management", "/resource-warehouse/entity-type-management", 9, resourceWarehouse.Id, "SystemManagement.EntityTypeManagement", "TagOutlined")),
+            await EnsureMenuAsync(CreateMenu("关系类型管理", "resource-warehouse:relation-type-management", "/resource-warehouse/relation-type-management", 10, resourceWarehouse.Id, "SystemManagement.RelationTypeManagement", "ShareAltOutlined")),
+            await EnsureMenuAsync(CreateMenu("专题统计分析配置", "resource-warehouse:analysis-statistics-config-management", "/resource-warehouse/analysis-statistics-config-management", 11, resourceWarehouse.Id, "SystemManagement.GeoModelManagement", "BarChartOutlined")),
+            await EnsureMenuAsync(CreateMenu("异步任务管理", "resource-warehouse:task-management", "/resource-warehouse/task-management", 12, resourceWarehouse.Id, "SystemManagement.TaskManagement", "ClockCircleOutlined")),
+            await EnsureMenuAsync(CreateMenu("文件管理", "resource-warehouse:file-management", "/resource-warehouse/file-management", 13, resourceWarehouse.Id, "SystemManagement.FileManagement", "FileOutlined")),
+            await EnsureMenuAsync(CreateMenu("地理模型执行管理", "resource-warehouse:geo-model-execution-management", "/resource-warehouse/geo-model-execution-management", 14, resourceWarehouse.Id, "SystemManagement.GeoModelExecutionManagement", "PlayCircleOutlined"))
         };
 
-        // 资源管理（目录不设 Path，前端转换时 key=Id 避免与子项 path 重复；Permission 与前端 systemManagementMenu 一致）
+        // 资源管理（目录）
         var resourceManagement = await EnsureMenuAsync(new Menu(
             id: Guid.NewGuid(),
             name: "资源管理",
@@ -164,13 +166,13 @@ public class MenuSeedDataContributor(
 
         var resourceManagementChildren = new List<Menu>
         {
-            await EnsureMenuAsync(CreateMenu("资源访问管理", "resource-management:resource-access-management", "/resource-management", 0, resourceManagement.Id, "ResourceManagement.ResourceAccessManagement")),
-            await EnsureMenuAsync(CreateMenu("权限管理", "resource-management:permission-list", "/resource-management/permission", 1, resourceManagement.Id, "ResourceManagement.PermissionList")),
-            await EnsureMenuAsync(CreateMenu("审核历史", "resource-management:audit-history", "/resource-management/audit/history", 2, resourceManagement.Id, "ResourceManagement.AuditHistory")),
-            await EnsureMenuAsync(CreateMenu("审核人管理", "resource-management:auditor-list", "/resource-management/auditor", 3, resourceManagement.Id, "ResourceManagement.AuditorList"))
+            await EnsureMenuAsync(CreateMenu("资源访问管理", "resource-management:resource-access-management", "/resource-management", 0, resourceManagement.Id, "ResourceManagement.ResourceAccessManagement", "SafetyOutlined")),
+            await EnsureMenuAsync(CreateMenu("权限管理", "resource-management:permission-list", "/resource-management/permission", 1, resourceManagement.Id, "ResourceManagement.PermissionList", "KeyOutlined")),
+            await EnsureMenuAsync(CreateMenu("审核历史", "resource-management:audit-history", "/resource-management/audit/history", 2, resourceManagement.Id, "ResourceManagement.AuditHistory", "HistoryOutlined")),
+            await EnsureMenuAsync(CreateMenu("审核人管理", "resource-management:auditor-list", "/resource-management/auditor", 3, resourceManagement.Id, "ResourceManagement.AuditorList", "TeamOutlined"))
         };
 
-        // 数据采集与治理（目录不设 Path，前端 key=Id 避免重复；权限与前端 dataCollectionMenu 一致）
+        // 数据采集（目录）
         var dataCollection = await EnsureMenuAsync(new Menu(
             id: Guid.NewGuid(),
             name: "数据采集",
@@ -185,23 +187,19 @@ public class MenuSeedDataContributor(
 
         var dataCollectionChildren = new List<Menu>
         {
-            await EnsureMenuAsync(CreateMenu("数据采集工作台", "data-collection:workbench", "/data-collection", 1, dataCollection.Id, "SystemManagement.DataCollection")),
-            await EnsureMenuAsync(CreateMenu("字典管理", "data-collection:dictionary", "/data-collection/dictionary", 2, dataCollection.Id, "SystemManagement.DictionaryManagement")),
-            await EnsureMenuAsync(CreateMenu("模板与规则管理", "data-collection:template", "/data-collection/template", 3, dataCollection.Id, "SystemManagement.DataGovernanceAdmin"))
+            await EnsureMenuAsync(CreateMenu("数据采集工作台", "data-collection:workbench", "/data-collection", 1, dataCollection.Id, "SystemManagement.DataCollection", "AppstoreOutlined")),
+            await EnsureMenuAsync(CreateMenu("字典管理", "data-collection:dictionary", "/data-collection/dictionary", 2, dataCollection.Id, "SystemManagement.DictionaryManagement", "BookOutlined")),
+            await EnsureMenuAsync(CreateMenu("模板与规则管理", "data-collection:template", "/data-collection/template", 3, dataCollection.Id, "SystemManagement.DataGovernanceAdmin", "ProfileOutlined"))
         };
 
-        // 默认模块简易菜单（无权限要求，Permission 为空）
-        var home = await EnsureMenuAsync(CreateMenu("首页", "home", "/", 1, null, null));
-        home.Icon ??= "HomeOutlined";
-
-        var oneMap = await EnsureMenuAsync(CreateMenu("一张图", "page", "/page", 2, null, null));
-        oneMap.Icon ??= "EnvironmentOutlined";
+        // 默认模块简易菜单
+        var home = await EnsureMenuAsync(CreateMenu("首页", "home", "/", 1, null, null, "HomeOutlined"));
+        var oneMap = await EnsureMenuAsync(CreateMenu("一张图", "page", "/page", 2, null, null, "GlobalOutlined"));
 
         // 为 admin 角色赋予所有菜单权限
         var adminRole = await _roleRepository.FindByNormalizedNameAsync(AdminRoleNormalizedName);
         if (adminRole != null)
         {
-            // 只补齐缺失菜单，不覆盖已有分配
             var existing = await _menuRepository.GetMenusByRoleIdAsync(adminRole.Id);
             var assigned = existing.Select(m => m.Id).ToHashSet();
 
@@ -230,7 +228,7 @@ public class MenuSeedDataContributor(
     }
 
     /// <param name="permission">ABP 权限名（与主后端 MenuPermissionNames 一致）；为 null 时表示无权限要求（如首页、一张图）</param>
-    /// <param name="icon">Ant Design 图标组件名（与前端菜单一致）</param>
+    /// <param name="icon">Ant Design 图标组件名（与前端菜单一致）；使用字符串形式，如 "HomeOutlined"</param>
     private static Menu CreateMenu(
         string name,
         string code,
@@ -264,13 +262,14 @@ public class MenuSeedDataContributor(
             return menu;
         }
 
-        // 仅补齐关键字段（不覆盖人工调整的 Name/Sort/Icon 等），避免破坏线上配置
+        // 仅补齐关键字段（不覆盖人工调整的 Name/Sort 等），避免破坏线上配置
         var changed = false;
         if (existing.Type != menu.Type) { existing.Type = menu.Type; changed = true; }
         if (existing.ParentId != menu.ParentId) { existing.ParentId = menu.ParentId; changed = true; }
         if (existing.Path == null && menu.Path != null) { existing.Path = menu.Path; changed = true; }
         if (string.IsNullOrWhiteSpace(existing.Permission) && !string.IsNullOrWhiteSpace(menu.Permission)) { existing.Permission = menu.Permission; changed = true; }
-        if (string.IsNullOrWhiteSpace(existing.Icon) && !string.IsNullOrWhiteSpace(menu.Icon)) { existing.Icon = menu.Icon; changed = true; }
+        // 始终用种子数据的 Icon 覆盖，确保已有环境能同步最新图标配置
+        if (existing.Icon != menu.Icon && menu.Icon != null) { existing.Icon = menu.Icon; changed = true; }
         if (existing.Status != MenuStatus.Enabled) { existing.Status = MenuStatus.Enabled; changed = true; }
         if (changed)
         {
@@ -279,4 +278,3 @@ public class MenuSeedDataContributor(
         return existing;
     }
 }
-
