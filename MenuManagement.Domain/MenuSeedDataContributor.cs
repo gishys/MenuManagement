@@ -71,7 +71,7 @@ public class MenuSeedDataContributor(
             await EnsureMenuAsync(CreateMenu("关联管理", "identity-management:association", "/identity-management/association-management", 5, identityManagement.Id, "AbpIdentity.OrganizationUnits", "LinkOutlined"))
         };
 
-        // 菜单管理（仅管理员可访问，复用 AbpIdentity.Roles 权限标识）
+        // 菜单管理（使用 MenuManagement.Menus 权限，与前端 systemManagementMenu.ts 及路由守卫保持一致）
         var menuManagement = await EnsureMenuAsync(new Menu(
             id: Guid.NewGuid(),
             name: "菜单管理",
@@ -82,7 +82,7 @@ public class MenuSeedDataContributor(
             Path = "/menu-management",
             Sort = 30,
             Status = MenuStatus.Enabled,
-            Permission = "AbpIdentity.Roles",
+            Permission = "MenuManagement.Menus",
             Icon = "MenuOutlined"
         });
 
