@@ -148,8 +148,10 @@ public class MenuSeedDataContributor(
             await EnsureMenuAsync(CreateMenu("专题统计分析配置", "resource-warehouse:analysis-statistics-config-management", "/resource-warehouse/analysis-statistics-config-management", 11, resourceWarehouse.Id, "DataWarehouse.StatisticsAnalysis", "BarChartOutlined")),
             await EnsureMenuAsync(CreateMenu("异步任务管理", "resource-warehouse:task-management", "/resource-warehouse/task-management", 12, resourceWarehouse.Id, "DataWarehouse.TaskManagement", "ClockCircleOutlined")),
             await EnsureMenuAsync(CreateMenu("文件管理", "resource-warehouse:file-management", "/resource-warehouse/file-management", 13, resourceWarehouse.Id, "DataWarehouse.FileManagement", "FileOutlined")),
-            await EnsureMenuAsync(CreateMenu("地理模型执行管理", "resource-warehouse:geo-model-execution-management", "/resource-warehouse/geo-model-execution-management", 14, resourceWarehouse.Id, "DataWarehouse.GeoModelExecution", "PlayCircleOutlined")),
-            await EnsureMenuAsync(CreateMenu("SDE同步管理", "resource-warehouse:sde-sync-management", "/resource-warehouse/sde-sync-management", 15, resourceWarehouse.Id, "DataWarehouse.SdeSync", "SyncOutlined"))
+            await EnsureMenuAsync(CreateMenu("文件目录管理", "resource-warehouse:file-directory-management", "/resource-warehouse/file-directory-management", 14, resourceWarehouse.Id, "DataWarehouse.FileDirectory", "FolderOpenOutlined")),
+            await EnsureMenuAsync(CreateMenu("目录模板管理", "resource-warehouse:file-directory-template-management", "/resource-warehouse/file-directory-template-management", 15, resourceWarehouse.Id, "DataWarehouse.FileDirectoryTemplate", "ProfileOutlined")),
+            await EnsureMenuAsync(CreateMenu("地理模型执行管理", "resource-warehouse:geo-model-execution-management", "/resource-warehouse/geo-model-execution-management", 16, resourceWarehouse.Id, "DataWarehouse.GeoModelExecution", "PlayCircleOutlined")),
+            await EnsureMenuAsync(CreateMenu("SDE同步管理", "resource-warehouse:sde-sync-management", "/resource-warehouse/sde-sync-management", 17, resourceWarehouse.Id, "DataWarehouse.SdeSync", "SyncOutlined"))
         };
 
         // 资源管理（目录）
