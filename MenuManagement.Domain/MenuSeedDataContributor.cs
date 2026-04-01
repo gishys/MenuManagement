@@ -33,20 +33,25 @@ public class MenuSeedDataContributor(
     {
         // 约定：种子数据需要幂等（可重复执行、只补缺失项，不覆盖人工配置）
 
-        // 地图服务管理（与前端 systemManagementMenu 首项一致）
+        // 地图服务管理（目录：聚合地图总览 + GIS 服务配置）
         var mapServiceManagement = await EnsureMenuAsync(new Menu(
             id: Guid.NewGuid(),
             name: "地图服务管理",
             code: "system-management",
-            type: MenuType.Menu,
+            type: MenuType.Directory,
             parentId: null)
         {
-            Path = "/system-management",
             Sort = 10,
             Status = MenuStatus.Enabled,
-            Permission = "GisService.MapService",
             Icon = "CompassOutlined"
         });
+
+        var mapServiceChildren = new List<Menu>
+        {
+            await EnsureMenuAsync(CreateMenu("地图服务总览", "system-management:overview", "/system-management", 1, mapServiceManagement.Id, "GisService.MapService", "CompassOutlined")),
+            await EnsureMenuAsync(CreateMenu("二维服务", "system-management:two-dimensional-service", "/system-management/two-dimensional-service", 2, mapServiceManagement.Id, "GisService.TwoDimensionalService", "EnvironmentOutlined")),
+            await EnsureMenuAsync(CreateMenu("矢量服务接口配置", "system-management:vector-service-interface", "/system-management/vector-service-interface", 3, mapServiceManagement.Id, "GisService.VectorServiceInterface", "ApiOutlined"))
+        };
 
         // 身份管理（目录，顶级与前端一致）
         var identityManagement = await EnsureMenuAsync(new Menu(
@@ -133,25 +138,58 @@ public class MenuSeedDataContributor(
             Status = MenuStatus.Enabled
         });
 
+        // 资源仓库核心数据资产管理（GIS服务类已移至"地图服务管理"，地理模型已独立，分析配置已独立）
         var resourceWarehouseChildren = new List<Menu>
         {
-            await EnsureMenuAsync(CreateMenu("二维服务", "resource-warehouse:two-dimensional-service", "/resource-warehouse/two-dimensional-service", 1, resourceWarehouse.Id, "GisService.TwoDimensionalService", "EnvironmentOutlined")),
-            await EnsureMenuAsync(CreateMenu("资源编目", "resource-warehouse:resource-catalog", "/resource-warehouse/resource-catalog", 2, resourceWarehouse.Id, "DataWarehouse.ResourceCatalog", "BookOutlined")),
+            await EnsureMenuAsync(CreateMenu("资源编目", "resource-warehouse:resource-catalog", "/resource-warehouse/resource-catalog", 1, resourceWarehouse.Id, "DataWarehouse.ResourceCatalog", "BookOutlined")),
+            await EnsureMenuAsync(CreateMenu("数据源管理", "resource-warehouse:datasource-management", "/resource-warehouse/datasource-management", 2, resourceWarehouse.Id, "DataWarehouse.Datasource", "HddOutlined")),
             await EnsureMenuAsync(CreateMenu("组织授权", "resource-warehouse:organization-authorization", "/resource-warehouse/organization-authorization", 3, resourceWarehouse.Id, "DataWarehouse.OrganizationAuth", "AuditOutlined")),
-            await EnsureMenuAsync(CreateMenu("数据源管理", "resource-warehouse:datasource-management", "/resource-warehouse/datasource-management", 4, resourceWarehouse.Id, "DataWarehouse.Datasource", "HddOutlined")),
-            await EnsureMenuAsync(CreateMenu("地理模型管理", "resource-warehouse:geo-model-management", "/resource-warehouse/geo-model-management", 5, resourceWarehouse.Id, "DataWarehouse.GeoModel", "NodeIndexOutlined")),
-            await EnsureMenuAsync(CreateMenu("地理模型参数模板管理", "resource-warehouse:geo-model-parameter-template-management", "/resource-warehouse/geo-model-parameter-template-management", 6, resourceWarehouse.Id, "DataWarehouse.GeoModelTemplate", "SettingOutlined")),
-            await EnsureMenuAsync(CreateMenu("矢量服务接口配置", "resource-warehouse:vector-service-interface-management", "/resource-warehouse/vector-service-interface-management", 7, resourceWarehouse.Id, "GisService.VectorServiceInterface", "ApiOutlined")),
-            await EnsureMenuAsync(CreateMenu("专题分析配置", "resource-warehouse:thematic-analysis-config-management", "/resource-warehouse/thematic-analysis-config-management", 8, resourceWarehouse.Id, "DataWarehouse.ThematicAnalysis", "PieChartOutlined")),
-            await EnsureMenuAsync(CreateMenu("实体类型管理", "resource-warehouse:entity-type-management", "/resource-warehouse/entity-type-management", 9, resourceWarehouse.Id, "DataWarehouse.EntityType", "TagOutlined")),
-            await EnsureMenuAsync(CreateMenu("关系类型管理", "resource-warehouse:relation-type-management", "/resource-warehouse/relation-type-management", 10, resourceWarehouse.Id, "DataWarehouse.RelationType", "ShareAltOutlined")),
-            await EnsureMenuAsync(CreateMenu("专题统计分析配置", "resource-warehouse:analysis-statistics-config-management", "/resource-warehouse/analysis-statistics-config-management", 11, resourceWarehouse.Id, "DataWarehouse.StatisticsAnalysis", "BarChartOutlined")),
-            await EnsureMenuAsync(CreateMenu("异步任务管理", "resource-warehouse:task-management", "/resource-warehouse/task-management", 12, resourceWarehouse.Id, "DataWarehouse.TaskManagement", "ClockCircleOutlined")),
-            await EnsureMenuAsync(CreateMenu("文件管理", "resource-warehouse:file-management", "/resource-warehouse/file-management", 13, resourceWarehouse.Id, "DataWarehouse.FileManagement", "FileOutlined")),
-            await EnsureMenuAsync(CreateMenu("文件目录管理", "resource-warehouse:file-directory-management", "/resource-warehouse/file-directory-management", 14, resourceWarehouse.Id, "DataWarehouse.FileDirectory", "FolderOpenOutlined")),
-            await EnsureMenuAsync(CreateMenu("目录模板管理", "resource-warehouse:file-directory-template-management", "/resource-warehouse/file-directory-template-management", 15, resourceWarehouse.Id, "DataWarehouse.FileDirectoryTemplate", "ProfileOutlined")),
-            await EnsureMenuAsync(CreateMenu("地理模型执行管理", "resource-warehouse:geo-model-execution-management", "/resource-warehouse/geo-model-execution-management", 16, resourceWarehouse.Id, "DataWarehouse.GeoModelExecution", "PlayCircleOutlined")),
-            await EnsureMenuAsync(CreateMenu("SDE同步管理", "resource-warehouse:sde-sync-management", "/resource-warehouse/sde-sync-management", 17, resourceWarehouse.Id, "DataWarehouse.SdeSync", "SyncOutlined"))
+            await EnsureMenuAsync(CreateMenu("SDE同步管理", "resource-warehouse:sde-sync-management", "/resource-warehouse/sde-sync-management", 4, resourceWarehouse.Id, "DataWarehouse.SdeSync", "SyncOutlined")),
+            await EnsureMenuAsync(CreateMenu("文件管理", "resource-warehouse:file-management", "/resource-warehouse/file-management", 5, resourceWarehouse.Id, "DataWarehouse.FileManagement", "FileOutlined")),
+            await EnsureMenuAsync(CreateMenu("文件目录管理", "resource-warehouse:file-directory-management", "/resource-warehouse/file-directory-management", 6, resourceWarehouse.Id, "DataWarehouse.FileDirectory", "FolderOpenOutlined")),
+            await EnsureMenuAsync(CreateMenu("目录模板管理", "resource-warehouse:file-directory-template-management", "/resource-warehouse/file-directory-template-management", 7, resourceWarehouse.Id, "DataWarehouse.FileDirectoryTemplate", "ProfileOutlined")),
+            await EnsureMenuAsync(CreateMenu("异步任务管理", "resource-warehouse:task-management", "/resource-warehouse/task-management", 8, resourceWarehouse.Id, "DataWarehouse.TaskManagement", "ClockCircleOutlined"))
+        };
+
+        // 地理模型（独立目录：模型定义 → 参数模板 → 执行管理，覆盖模型全生命周期）
+        var geoModel = await EnsureMenuAsync(new Menu(
+            id: Guid.NewGuid(),
+            name: "地理模型",
+            code: "geo-model",
+            type: MenuType.Directory,
+            parentId: null)
+        {
+            Sort = 52,
+            Icon = "NodeIndexOutlined",
+            Status = MenuStatus.Enabled
+        });
+
+        var geoModelChildren = new List<Menu>
+        {
+            await EnsureMenuAsync(CreateMenu("地理模型管理", "geo-model:geo-model-management", "/geo-model/geo-model-management", 1, geoModel.Id, "DataWarehouse.GeoModel", "NodeIndexOutlined")),
+            await EnsureMenuAsync(CreateMenu("地理模型参数模板管理", "geo-model:parameter-template", "/geo-model/parameter-template", 2, geoModel.Id, "DataWarehouse.GeoModelTemplate", "SettingOutlined")),
+            await EnsureMenuAsync(CreateMenu("地理模型执行管理", "geo-model:execution", "/geo-model/execution", 3, geoModel.Id, "DataWarehouse.GeoModelExecution", "PlayCircleOutlined"))
+        };
+
+        // 分析配置（独立目录：本体基础数据 + 专题/统计分析配置，供一张图工具使用）
+        var analysisConfig = await EnsureMenuAsync(new Menu(
+            id: Guid.NewGuid(),
+            name: "分析配置",
+            code: "analysis-config",
+            type: MenuType.Directory,
+            parentId: null)
+        {
+            Sort = 54,
+            Icon = "PieChartOutlined",
+            Status = MenuStatus.Enabled
+        });
+
+        var analysisConfigChildren = new List<Menu>
+        {
+            await EnsureMenuAsync(CreateMenu("实体类型管理", "analysis-config:entity-type", "/analysis-config/entity-type", 1, analysisConfig.Id, "DataWarehouse.EntityType", "TagOutlined")),
+            await EnsureMenuAsync(CreateMenu("关系类型管理", "analysis-config:relation-type", "/analysis-config/relation-type", 2, analysisConfig.Id, "DataWarehouse.RelationType", "ShareAltOutlined")),
+            await EnsureMenuAsync(CreateMenu("专题分析配置", "analysis-config:thematic-analysis", "/analysis-config/thematic-analysis", 3, analysisConfig.Id, "DataWarehouse.ThematicAnalysis", "PieChartOutlined")),
+            await EnsureMenuAsync(CreateMenu("专题统计分析配置", "analysis-config:statistics-analysis", "/analysis-config/statistics-analysis", 4, analysisConfig.Id, "DataWarehouse.StatisticsAnalysis", "BarChartOutlined"))
         };
 
         // 资源管理（目录）
@@ -216,14 +254,19 @@ public class MenuSeedDataContributor(
                 resourceManagement.Id,
                 dataCollection.Id,
                 menuManagement.Id,
+                geoModel.Id,
+                analysisConfig.Id,
                 home.Id,
                 oneMap.Id
             };
+            shouldAssign.AddRange(mapServiceChildren.Select(m => m.Id));
             shouldAssign.AddRange(identityChildren.Select(m => m.Id));
             shouldAssign.AddRange(messageCenterChildren.Select(m => m.Id));
             shouldAssign.AddRange(resourceWarehouseChildren.Select(m => m.Id));
             shouldAssign.AddRange(resourceManagementChildren.Select(m => m.Id));
             shouldAssign.AddRange(dataCollectionChildren.Select(m => m.Id));
+            shouldAssign.AddRange(geoModelChildren.Select(m => m.Id));
+            shouldAssign.AddRange(analysisConfigChildren.Select(m => m.Id));
 
             var merged = assigned.Union(shouldAssign).Distinct().ToList();
             await _menuRepository.ReplaceMenusForRoleAsync(adminRole.Id, merged);
