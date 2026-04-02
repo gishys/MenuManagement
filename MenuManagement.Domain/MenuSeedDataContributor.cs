@@ -33,10 +33,10 @@ public class MenuSeedDataContributor(
     {
         // 约定：种子数据需要幂等（可重复执行、只补缺失项，不覆盖人工配置）
 
-        // 地图服务管理（目录：聚合地图总览 + GIS 服务配置）
+        // GIS 服务管理（目录：聚合地图总览 + GIS 服务配置；对应权限组 GisService）
         var mapServiceManagement = await EnsureMenuAsync(new Menu(
             id: Guid.NewGuid(),
-            name: "地图服务管理",
+            name: "GIS 服务管理",
             code: "system-management",
             type: MenuType.Directory,
             parentId: null)
@@ -91,10 +91,10 @@ public class MenuSeedDataContributor(
             Icon = "MenuOutlined"
         });
 
-        // 消息中心
+        // 消息通知（对应权限组 MessageCenter；与 Permission:MessageCenter = "消息通知" 对齐）
         var messageCenter = await EnsureMenuAsync(new Menu(
             id: Guid.NewGuid(),
-            name: "消息中心",
+            name: "消息通知",
             code: "message-center",
             type: MenuType.Directory,
             parentId: null)
@@ -110,30 +110,34 @@ public class MenuSeedDataContributor(
             await EnsureMenuAsync(CreateMenu("消息模板管理", "message-center:template-management", "/message-center/template-management", 2, messageCenter.Id, "MessageCenter.Templates", "FileTextOutlined"))
         };
 
-        // 日志与行为管理
+        // 运维监控（目录：行为日志 + 操作审计日志；对应权限组 Monitoring = "运维监控"）
         var logsManagement = await EnsureMenuAsync(new Menu(
             id: Guid.NewGuid(),
-            name: "日志与行为管理",
+            name: "运维监控",
             code: "logs-management",
-            type: MenuType.Menu,
-            parentId: null)
-        {
-            Path = "/logs-management",
-            Sort = 45,
-            Status = MenuStatus.Enabled,
-            Permission = "Monitoring.BehaviorLog",
-            Icon = "HistoryOutlined"
-        });
-
-        // 资源仓库
-        var resourceWarehouse = await EnsureMenuAsync(new Menu(
-            id: Guid.NewGuid(),
-            name: "资源仓库",
-            code: "resource-warehouse",
             type: MenuType.Directory,
             parentId: null)
         {
             Sort = 50,
+            Status = MenuStatus.Enabled,
+            Icon = "HistoryOutlined"
+        });
+
+        var logsManagementChildren = new List<Menu>
+        {
+            await EnsureMenuAsync(CreateMenu("行为日志", "logs-management:behavior", "/logs-management", 1, logsManagement.Id, "Monitoring.BehaviorLog", "HistoryOutlined")),
+            await EnsureMenuAsync(CreateMenu("操作审计日志", "logs-management:audit", "/logs-management/audit", 2, logsManagement.Id, "Monitoring.AuditLog", "AuditOutlined"))
+        };
+
+        // 空间数据仓库（对应权限组 DataWarehouse = "空间数据仓库"）
+        var resourceWarehouse = await EnsureMenuAsync(new Menu(
+            id: Guid.NewGuid(),
+            name: "空间数据仓库",
+            code: "resource-warehouse",
+            type: MenuType.Directory,
+            parentId: null)
+        {
+            Sort = 60,
             Icon = "DatabaseOutlined",
             Status = MenuStatus.Enabled
         });
@@ -159,7 +163,7 @@ public class MenuSeedDataContributor(
             type: MenuType.Directory,
             parentId: null)
         {
-            Sort = 52,
+            Sort = 70,
             Icon = "NodeIndexOutlined",
             Status = MenuStatus.Enabled
         });
@@ -179,7 +183,7 @@ public class MenuSeedDataContributor(
             type: MenuType.Directory,
             parentId: null)
         {
-            Sort = 54,
+            Sort = 80,
             Icon = "PieChartOutlined",
             Status = MenuStatus.Enabled
         });
@@ -192,15 +196,15 @@ public class MenuSeedDataContributor(
             await EnsureMenuAsync(CreateMenu("专题统计分析配置", "analysis-config:statistics-analysis", "/analysis-config/statistics-analysis", 4, analysisConfig.Id, "DataWarehouse.StatisticsAnalysis", "BarChartOutlined"))
         };
 
-        // 资源管理（目录）
+        // 资源访问控制（对应权限组 ResourceAccess = "资源访问控制"）
         var resourceManagement = await EnsureMenuAsync(new Menu(
             id: Guid.NewGuid(),
-            name: "资源管理",
+            name: "资源访问控制",
             code: "resource-management",
             type: MenuType.Directory,
             parentId: null)
         {
-            Sort = 60,
+            Sort = 100,
             Icon = "FolderOutlined",
             Status = MenuStatus.Enabled
         });
@@ -213,15 +217,15 @@ public class MenuSeedDataContributor(
             await EnsureMenuAsync(CreateMenu("审核人管理", "resource-management:auditor-list", "/resource-management/auditor", 3, resourceManagement.Id, "ResourceAccess.AuditorManagement", "TeamOutlined"))
         };
 
-        // 数据采集（目录）
+        // 数据采集与治理（对应权限组 DataCollection = "数据采集与治理"）
         var dataCollection = await EnsureMenuAsync(new Menu(
             id: Guid.NewGuid(),
-            name: "数据采集",
+            name: "数据采集与治理",
             code: "data-collection",
             type: MenuType.Directory,
             parentId: null)
         {
-            Sort = 55,
+            Sort = 90,
             Icon = "DatabaseOutlined",
             Status = MenuStatus.Enabled
         });
@@ -262,6 +266,7 @@ public class MenuSeedDataContributor(
             shouldAssign.AddRange(mapServiceChildren.Select(m => m.Id));
             shouldAssign.AddRange(identityChildren.Select(m => m.Id));
             shouldAssign.AddRange(messageCenterChildren.Select(m => m.Id));
+            shouldAssign.AddRange(logsManagementChildren.Select(m => m.Id));
             shouldAssign.AddRange(resourceWarehouseChildren.Select(m => m.Id));
             shouldAssign.AddRange(resourceManagementChildren.Select(m => m.Id));
             shouldAssign.AddRange(dataCollectionChildren.Select(m => m.Id));
