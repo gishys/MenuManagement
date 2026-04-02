@@ -50,7 +50,8 @@ public class MenuSeedDataContributor(
         {
             await EnsureMenuAsync(CreateMenu("地图服务总览", "system-management:overview", "/system-management", 1, mapServiceManagement.Id, "GisService.MapService", "CompassOutlined")),
             await EnsureMenuAsync(CreateMenu("二维服务", "system-management:two-dimensional-service", "/system-management/two-dimensional-service", 2, mapServiceManagement.Id, "GisService.TwoDimensionalService", "EnvironmentOutlined")),
-            await EnsureMenuAsync(CreateMenu("矢量服务接口配置", "system-management:vector-service-interface", "/system-management/vector-service-interface", 3, mapServiceManagement.Id, "GisService.VectorServiceInterface", "ApiOutlined"))
+            await EnsureMenuAsync(CreateMenu("矢量服务接口配置", "system-management:vector-service-interface", "/system-management/vector-service-interface", 3, mapServiceManagement.Id, "GisService.VectorServiceInterface", "ApiOutlined")),
+            await EnsureMenuAsync(CreateMenu("GeoServer 对齐管理", "system-management:geoserver-align-management", "/system-management/geoserver-align-management", 4, mapServiceManagement.Id, "GisService.TwoDimensionalService", "SyncOutlined"))
         };
 
         // 身份管理（目录，顶级与前端一致）
