@@ -195,7 +195,9 @@ public class MenuSeedDataContributor(
             await EnsureMenuAsync(CreateMenu("关系类型管理", "analysis-config:relation-type", "/analysis-config/relation-type", 2, analysisConfig.Id, "DataWarehouse.RelationType", "ShareAltOutlined")),
             await EnsureMenuAsync(CreateMenu("专题分析配置", "analysis-config:thematic-analysis", "/analysis-config/thematic-analysis", 3, analysisConfig.Id, "DataWarehouse.ThematicAnalysis", "PieChartOutlined")),
             await EnsureMenuAsync(CreateMenu("专题统计分析配置", "analysis-config:statistics-analysis", "/analysis-config/statistics-analysis", 4, analysisConfig.Id, "DataWarehouse.StatisticsAnalysis", "BarChartOutlined")),
-            await EnsureMenuAsync(CreateMenu("动态表单管理", "analysis-config:form-definition", "/analysis-config/form-definition", 5, analysisConfig.Id, "DataWarehouse.FormDefinition", "FormOutlined"))
+            await EnsureMenuAsync(CreateMenu("动态表单管理", "analysis-config:form-definition", "/analysis-config/form-definition", 5, analysisConfig.Id, "DataWarehouse.FormDefinition", "FormOutlined")),
+            await EnsureMenuAsync(CreateMenu("实体数据管理", "analysis-config:entity-data", "/analysis-config/entity-data", 6, analysisConfig.Id, "DataWarehouse.EntityData", "TableOutlined")),
+            await EnsureMenuAsync(CreateMenu("打印模板管理", "analysis-config:print-template", "/analysis-config/print-template", 7, analysisConfig.Id, "DataWarehouse.PrintTemplate", "PrinterOutlined"))
         };
 
         // 资源访问控制（对应权限组 ResourceAccess = "资源访问控制"）
