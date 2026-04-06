@@ -292,7 +292,9 @@ public class MenuAppService(
             IsCache = createInput.IsCache,
             IsExternal = createInput.IsExternal,
             ExternalUrl = createInput.ExternalUrl,
-            Remark = createInput.Remark
+            Remark = createInput.Remark,
+            FeatureType = createInput.FeatureType,
+            DynamicConfig = createInput.DynamicConfig
         };
 
         return Task.FromResult(menu);
@@ -315,7 +317,68 @@ public class MenuAppService(
         entity.IsExternal = updateInput.IsExternal;
         entity.ExternalUrl = updateInput.ExternalUrl;
         entity.Remark = updateInput.Remark;
+        entity.FeatureType = updateInput.FeatureType;
+        entity.DynamicConfig = updateInput.DynamicConfig;
 
         await Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// 发布菜单动态配置（Draft → Published）
+    /// </summary>
+    public async Task PublishAsync(Guid id)
+    {
+        var menu = await _menuRepository.GetAsync(id);
+        menu.PublishStatus = MenuPublishStatus.Published;
+        await _menuRepository.UpdateAsync(menu);
+    }
+
+    /// <summary>
+    /// 下线菜单动态配置（Published → Draft）
+    /// </summary>
+    public async Task UnpublishAsync(Guid id)
+    {
+        var menu = await _menuRepository.GetAsync(id);
+        menu.PublishStatus = MenuPublishStatus.Draft;
+        await _menuRepository.UpdateAsync(menu);
+    }
+
+    /// <summary>
+    /// 归档菜单动态配置（→ Archived）
+    /// </summary>
+    public async Task ArchiveAsync(Guid id)
+    {
+        var menu = await _menuRepository.GetAsync(id);
+        menu.PublishStatus = MenuPublishStatus.Archived;
+        await _menuRepository.UpdateAsync(menu);
+    }
+
+    /// <summary>
+    /// 根据菜单编码查询菜单（运行时渲染器使用）
+    /// </summary>
+    public async Task<MenuDto> GetByCodeAsync(string code)
+    {
+        var menus = await _menuRepository.GetListAsync(m => m.Code == code);
+        var menu = menus.FirstOrDefault()
+            ?? throw new Volo.Abp.UserFriendlyException($"菜单编码 '{code}' 不存在");
+        return ObjectMapper.Map<Menu, MenuDto>(menu);
+    }
+
+    /// <summary>
+    /// 获取已发布状态的菜单树（供运行时侧边栏/导航使用）
+    /// </summary>
+    public async Task<List<MenuDto>> GetPublishedTreeAsync()
+    {
+        var menus = await _menuRepository.GetListAsync(
+            m => m.PublishStatus == MenuPublishStatus.Published && m.Status == MenuStatus.Enabled);
+        var menuDtos = ObjectMapper.Map<List<Menu>, List<MenuDto>>(menus);
+
+        var rootMenus = menuDtos.Where(m => m.ParentId == null).OrderBy(m => m.Sort).ToList();
+        foreach (var rootMenu in rootMenus)
+        {
+            BuildMenuTree(rootMenu, menuDtos);
+        }
+
+        return rootMenus;
     }
 }

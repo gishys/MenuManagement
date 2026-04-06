@@ -9,6 +9,20 @@ namespace MenuManagement.Domain.Entities;
 public class Menu : FullAuditedAggregateRoot<Guid>
 {
     /// <summary>
+    /// 菜单功能类型（动态菜单配置使用）
+    /// </summary>
+    public MenuFeatureType FeatureType { get; set; } = MenuFeatureType.None;
+
+    /// <summary>
+    /// 菜单发布状态（动态菜单生命周期管理）
+    /// </summary>
+    public MenuPublishStatus PublishStatus { get; set; } = MenuPublishStatus.Draft;
+
+    /// <summary>
+    /// 动态菜单配置（JSON），存储表单绑定、列表列、导入导出等运行时配置
+    /// </summary>
+    public string? DynamicConfig { get; set; }
+    /// <summary>
     /// 菜单名称
     /// </summary>
     public string Name { get; set; } = string.Empty;

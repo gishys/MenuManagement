@@ -321,4 +321,73 @@ public class MenuController(IMenuAppService menuAppService) : AbpControllerBase
     {
         return await _menuAppService.GetListAsync(input);
     }
+
+    /// <summary>
+    /// 发布菜单动态配置（Draft → Published）
+    /// </summary>
+    /// <param name="id">菜单ID</param>
+    /// <response code="200">发布成功</response>
+    /// <response code="404">菜单不存在</response>
+    [HttpPost("{id}/publish")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(404, Type = typeof(ProblemDetails))]
+    public async Task PublishAsync([Required] Guid id)
+    {
+        await _menuAppService.PublishAsync(id);
+    }
+
+    /// <summary>
+    /// 下线菜单动态配置（Published → Draft）
+    /// </summary>
+    /// <param name="id">菜单ID</param>
+    /// <response code="200">下线成功</response>
+    /// <response code="404">菜单不存在</response>
+    [HttpPost("{id}/unpublish")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(404, Type = typeof(ProblemDetails))]
+    public async Task UnpublishAsync([Required] Guid id)
+    {
+        await _menuAppService.UnpublishAsync(id);
+    }
+
+    /// <summary>
+    /// 归档菜单动态配置（→ Archived）
+    /// </summary>
+    /// <param name="id">菜单ID</param>
+    /// <response code="200">归档成功</response>
+    /// <response code="404">菜单不存在</response>
+    [HttpPost("{id}/archive")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(404, Type = typeof(ProblemDetails))]
+    public async Task ArchiveAsync([Required] Guid id)
+    {
+        await _menuAppService.ArchiveAsync(id);
+    }
+
+    /// <summary>
+    /// 根据菜单编码查询菜单（运行时渲染器使用）
+    /// </summary>
+    /// <param name="code">菜单编码</param>
+    /// <returns>菜单信息（含 DynamicConfig）</returns>
+    /// <response code="200">成功返回菜单信息</response>
+    /// <response code="404">菜单不存在</response>
+    [HttpGet("by-code/{code}")]
+    [ProducesResponseType(200, Type = typeof(MenuDto))]
+    [ProducesResponseType(404, Type = typeof(ProblemDetails))]
+    public async Task<MenuDto> GetByCodeAsync([Required] string code)
+    {
+        return await _menuAppService.GetByCodeAsync(code);
+    }
+
+    /// <summary>
+    /// 获取已发布状态的菜单树（供运行时侧边栏/导航使用）
+    /// </summary>
+    /// <returns>已发布的菜单树</returns>
+    /// <response code="200">成功返回菜单树</response>
+    [HttpGet("published-tree")]
+    [ProducesResponseType(200, Type = typeof(List<MenuDto>))]
+    public async Task<List<MenuDto>> GetPublishedTreeAsync()
+    {
+        return await _menuAppService.GetPublishedTreeAsync();
+    }
 }

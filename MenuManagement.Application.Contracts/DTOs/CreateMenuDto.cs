@@ -93,4 +93,14 @@ public class CreateMenuDto
     /// </summary>
     [StringLength(500)]
     public string? Remark { get; set; }
+
+    /// <summary>
+    /// 菜单功能类型（动态菜单使用）
+    /// </summary>
+    public MenuFeatureType FeatureType { get; set; } = MenuFeatureType.None;
+
+    /// <summary>
+    /// 动态菜单配置（JSON），存储表单绑定、列表列配置等
+    /// </summary>
+    public string? DynamicConfig { get; set; }
 }

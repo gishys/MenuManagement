@@ -53,4 +53,29 @@ public interface IMenuAppService : ICrudAppService<MenuDto, Guid, PagedAndSorted
     /// 按主体获取可访问的菜单权限标识列表。providerName: U=用户,R=角色,O=组织；providerKey: 对应 ID
     /// </summary>
     Task<List<string>> GetMenuPermissionsAsync(string providerName, string providerKey);
+
+    /// <summary>
+    /// 发布菜单动态配置（Draft → Published）
+    /// </summary>
+    Task PublishAsync(Guid id);
+
+    /// <summary>
+    /// 下线菜单动态配置（Published → Draft）
+    /// </summary>
+    Task UnpublishAsync(Guid id);
+
+    /// <summary>
+    /// 归档菜单动态配置（→ Archived）
+    /// </summary>
+    Task ArchiveAsync(Guid id);
+
+    /// <summary>
+    /// 根据菜单编码查询菜单（运行时渲染器使用）
+    /// </summary>
+    Task<MenuDto> GetByCodeAsync(string code);
+
+    /// <summary>
+    /// 获取已发布状态的菜单树（供运行时侧边栏/导航使用）
+    /// </summary>
+    Task<List<MenuDto>> GetPublishedTreeAsync();
 }

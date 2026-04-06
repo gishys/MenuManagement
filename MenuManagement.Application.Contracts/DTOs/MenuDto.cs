@@ -90,6 +90,21 @@ public class MenuDto : FullAuditedEntityDto<Guid>
     public string? Remark { get; set; }
 
     /// <summary>
+    /// 菜单功能类型（动态菜单使用）
+    /// </summary>
+    public MenuFeatureType FeatureType { get; set; } = MenuFeatureType.None;
+
+    /// <summary>
+    /// 菜单发布状态
+    /// </summary>
+    public MenuPublishStatus PublishStatus { get; set; } = MenuPublishStatus.Draft;
+
+    /// <summary>
+    /// 动态菜单配置（JSON），存储表单绑定、列表列配置等
+    /// </summary>
+    public string? DynamicConfig { get; set; }
+
+    /// <summary>
     /// 子菜单集合
     /// </summary>
     public List<MenuDto> Children { get; set; } = [];

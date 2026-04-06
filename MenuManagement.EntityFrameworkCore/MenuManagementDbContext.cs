@@ -70,6 +70,9 @@ public class MenuManagementDbContext(DbContextOptions<MenuManagementDbContext> o
             b.Property(x => x.Permission).HasMaxLength(100);
             b.Property(x => x.ExternalUrl).HasMaxLength(500);
             b.Property(x => x.Remark).HasMaxLength(500);
+            b.Property(x => x.FeatureType).HasDefaultValue(0);
+            b.Property(x => x.PublishStatus).HasDefaultValue(0);
+            b.Property(x => x.DynamicConfig).HasColumnType("text");
 
             b.HasOne(x => x.Parent)
                 .WithMany(x => x.Children)
