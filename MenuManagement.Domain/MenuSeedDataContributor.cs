@@ -54,6 +54,24 @@ public class MenuSeedDataContributor(
             await EnsureMenuAsync(CreateMenu("GeoServer 对齐管理", "system-management:geoserver-align-management", "/system-management/geoserver-align-management", 4, mapServiceManagement.Id, "GisService.TwoDimensionalService", "SyncOutlined"))
         };
 
+        // 三维服务（目录：三维场景工作台；对应权限组 ThreeDScene）
+        var threeDService = await EnsureMenuAsync(new Menu(
+            id: Guid.NewGuid(),
+            name: "三维服务",
+            code: "three-d-service",
+            type: MenuType.Directory,
+            parentId: null)
+        {
+            Sort = 15,
+            Status = MenuStatus.Enabled,
+            Icon = "GlobalOutlined"
+        });
+
+        var threeDServiceChildren = new List<Menu>
+        {
+            await EnsureMenuAsync(CreateMenu("三维场景", "three-d-service:scene", "/3d-scene", 1, threeDService.Id, "ThreeDScene.ModelManagement", "GlobalOutlined"))
+        };
+
         // 身份管理（目录，顶级与前端一致）
         var identityManagement = await EnsureMenuAsync(new Menu(
             id: Guid.NewGuid(),
@@ -255,6 +273,7 @@ public class MenuSeedDataContributor(
             var shouldAssign = new List<Guid>
             {
                 mapServiceManagement.Id,
+                threeDService.Id,
                 identityManagement.Id,
                 messageCenter.Id,
                 logsManagement.Id,
@@ -268,6 +287,7 @@ public class MenuSeedDataContributor(
                 oneMap.Id
             };
             shouldAssign.AddRange(mapServiceChildren.Select(m => m.Id));
+            shouldAssign.AddRange(threeDServiceChildren.Select(m => m.Id));
             shouldAssign.AddRange(identityChildren.Select(m => m.Id));
             shouldAssign.AddRange(messageCenterChildren.Select(m => m.Id));
             shouldAssign.AddRange(logsManagementChildren.Select(m => m.Id));
