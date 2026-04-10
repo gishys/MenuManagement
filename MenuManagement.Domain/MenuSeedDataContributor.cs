@@ -50,8 +50,9 @@ public class MenuSeedDataContributor(
         {
             await EnsureMenuAsync(CreateMenu("地图服务总览", "system-management:overview", "/system-management", 1, mapServiceManagement.Id, "GisService.MapService", "CompassOutlined")),
             await EnsureMenuAsync(CreateMenu("二维服务", "system-management:two-dimensional-service", "/system-management/two-dimensional-service", 2, mapServiceManagement.Id, "GisService.TwoDimensionalService", "EnvironmentOutlined")),
-            await EnsureMenuAsync(CreateMenu("矢量服务接口配置", "system-management:vector-service-interface", "/system-management/vector-service-interface", 3, mapServiceManagement.Id, "GisService.VectorServiceInterface", "ApiOutlined")),
-            await EnsureMenuAsync(CreateMenu("GeoServer 对齐管理", "system-management:geoserver-align-management", "/system-management/geoserver-align-management", 4, mapServiceManagement.Id, "GisService.TwoDimensionalService", "SyncOutlined"))
+            await EnsureMenuAsync(CreateMenu("三维服务", "system-management:three-dimensional-service", "/system-management/three-dimensional-service", 3, mapServiceManagement.Id, "GisService.ThreeDimensionalService", "GlobalOutlined")),
+            await EnsureMenuAsync(CreateMenu("矢量服务接口配置", "system-management:vector-service-interface", "/system-management/vector-service-interface", 4, mapServiceManagement.Id, "GisService.VectorServiceInterface", "ApiOutlined")),
+            await EnsureMenuAsync(CreateMenu("GeoServer 对齐管理", "system-management:geoserver-align-management", "/system-management/geoserver-align-management", 5, mapServiceManagement.Id, "GisService.TwoDimensionalService", "SyncOutlined"))
         };
 
         // 三维服务（目录：三维场景工作台；对应权限组 ThreeDScene）
@@ -165,13 +166,14 @@ public class MenuSeedDataContributor(
         var resourceWarehouseChildren = new List<Menu>
         {
             await EnsureMenuAsync(CreateMenu("资源编目", "resource-warehouse:resource-catalog", "/resource-warehouse/resource-catalog", 1, resourceWarehouse.Id, "DataWarehouse.ResourceCatalog", "BookOutlined")),
-            await EnsureMenuAsync(CreateMenu("数据源管理", "resource-warehouse:datasource-management", "/resource-warehouse/datasource-management", 2, resourceWarehouse.Id, "DataWarehouse.Datasource", "HddOutlined")),
-            await EnsureMenuAsync(CreateMenu("组织授权", "resource-warehouse:organization-authorization", "/resource-warehouse/organization-authorization", 3, resourceWarehouse.Id, "DataWarehouse.OrganizationAuth", "AuditOutlined")),
-            await EnsureMenuAsync(CreateMenu("SDE同步管理", "resource-warehouse:sde-sync-management", "/resource-warehouse/sde-sync-management", 4, resourceWarehouse.Id, "DataWarehouse.SdeSync", "SyncOutlined")),
-            await EnsureMenuAsync(CreateMenu("文件管理", "resource-warehouse:file-management", "/resource-warehouse/file-management", 5, resourceWarehouse.Id, "DataWarehouse.FileManagement", "FileOutlined")),
-            await EnsureMenuAsync(CreateMenu("文件目录管理", "resource-warehouse:file-directory-management", "/resource-warehouse/file-directory-management", 6, resourceWarehouse.Id, "DataWarehouse.FileDirectory", "FolderOpenOutlined")),
-            await EnsureMenuAsync(CreateMenu("目录模板管理", "resource-warehouse:file-directory-template-management", "/resource-warehouse/file-directory-template-management", 7, resourceWarehouse.Id, "DataWarehouse.FileDirectoryTemplate", "ProfileOutlined")),
-            await EnsureMenuAsync(CreateMenu("异步任务管理", "resource-warehouse:task-management", "/resource-warehouse/task-management", 8, resourceWarehouse.Id, "DataWarehouse.TaskManagement", "ClockCircleOutlined"))
+            await EnsureMenuAsync(CreateMenu("三维资源编目", "resource-warehouse:three-d-resource-catalog", "/resource-warehouse/three-d-resource-catalog", 2, resourceWarehouse.Id, "DataWarehouse.ThreeDResourceCatalog", "AppstoreOutlined")),
+            await EnsureMenuAsync(CreateMenu("数据源管理", "resource-warehouse:datasource-management", "/resource-warehouse/datasource-management", 3, resourceWarehouse.Id, "DataWarehouse.Datasource", "HddOutlined")),
+            await EnsureMenuAsync(CreateMenu("组织授权", "resource-warehouse:organization-authorization", "/resource-warehouse/organization-authorization", 4, resourceWarehouse.Id, "DataWarehouse.OrganizationAuth", "AuditOutlined")),
+            await EnsureMenuAsync(CreateMenu("SDE同步管理", "resource-warehouse:sde-sync-management", "/resource-warehouse/sde-sync-management", 5, resourceWarehouse.Id, "DataWarehouse.SdeSync", "SyncOutlined")),
+            await EnsureMenuAsync(CreateMenu("文件管理", "resource-warehouse:file-management", "/resource-warehouse/file-management", 6, resourceWarehouse.Id, "DataWarehouse.FileManagement", "FileOutlined")),
+            await EnsureMenuAsync(CreateMenu("文件目录管理", "resource-warehouse:file-directory-management", "/resource-warehouse/file-directory-management", 7, resourceWarehouse.Id, "DataWarehouse.FileDirectory", "FolderOpenOutlined")),
+            await EnsureMenuAsync(CreateMenu("目录模板管理", "resource-warehouse:file-directory-template-management", "/resource-warehouse/file-directory-template-management", 8, resourceWarehouse.Id, "DataWarehouse.FileDirectoryTemplate", "ProfileOutlined")),
+            await EnsureMenuAsync(CreateMenu("异步任务管理", "resource-warehouse:task-management", "/resource-warehouse/task-management", 9, resourceWarehouse.Id, "DataWarehouse.TaskManagement", "ClockCircleOutlined"))
         };
 
         // 地理模型（独立目录：模型定义 → 参数模板 → 执行管理，覆盖模型全生命周期）
