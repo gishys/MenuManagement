@@ -52,7 +52,8 @@ public class MenuSeedDataContributor(
             await EnsureMenuAsync(CreateMenu("二维服务", "system-management:two-dimensional-service", "/system-management/two-dimensional-service", 2, mapServiceManagement.Id, "GisService.TwoDimensionalService", "EnvironmentOutlined")),
             await EnsureMenuAsync(CreateMenu("三维服务", "system-management:three-dimensional-service", "/system-management/three-dimensional-service", 3, mapServiceManagement.Id, "GisService.ThreeDimensionalService", "GlobalOutlined")),
             await EnsureMenuAsync(CreateMenu("矢量服务接口配置", "system-management:vector-service-interface", "/system-management/vector-service-interface", 4, mapServiceManagement.Id, "GisService.VectorServiceInterface", "ApiOutlined")),
-            await EnsureMenuAsync(CreateMenu("GeoServer 对齐管理", "system-management:geoserver-align-management", "/system-management/geoserver-align-management", 5, mapServiceManagement.Id, "GisService.TwoDimensionalService", "SyncOutlined"))
+            await EnsureMenuAsync(CreateMenu("GeoServer 对齐管理", "system-management:geoserver-align-management", "/system-management/geoserver-align-management", 5, mapServiceManagement.Id, "GisService.TwoDimensionalService", "SyncOutlined")),
+            await EnsureMenuAsync(CreateMenu("COG 影像服务", "system-management:cog-imagery-service", "/system-management/cog-imagery-service", 6, mapServiceManagement.Id, "GisService.CogImageryService", "PictureOutlined"))
         };
 
         // 三维服务（目录：三维场景工作台；对应权限组 ThreeDScene）
